@@ -250,3 +250,119 @@ export const insertDepartmentRoutingSchema = createInsertSchema(departmentRoutin
 
 export type DepartmentRouting = typeof departmentRouting.$inferSelect;
 export type InsertDepartmentRouting = z.infer<typeof insertDepartmentRoutingSchema>;
+
+// Audit logs for compliance and transparency
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  eventType: varchar("event_type", { length: 100 }).notNull(), // "bias_detected", "policy_violation", "response_blocked", etc.
+  severity: varchar("severity", { length: 20 }), // "low", "medium", "high"
+  messageId: varchar("message_id").references(() => messages.id),
+  conversationId: varchar("conversation_id").references(() => conversations.id),
+  userId: varchar("user_id").references(() => users.id),
+  details: jsonb("details"), // Detailed information about the event
+  ipAddress: varchar("ip_address", { length: 50 }),
+  userAgent: text("user_agent"),
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  message: one(messages, {
+    fields: [auditLogs.messageId],
+    references: [messages.id],
+  }),
+  conversation: one(conversations, {
+    fields: [auditLogs.conversationId],
+    references: [conversations.id],
+  }),
+  user: one(users, {
+    fields: [auditLogs.userId],
+    references: [users.id],
+  }),
+  reviewer: one(users, {
+    fields: [auditLogs.reviewedBy],
+    references: [users.id],
+  }),
+}));
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+
+// Policy configurations for guardrails
+export const policyConfigs = pgTable("policy_configs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  configType: varchar("config_type", { length: 50 }).notNull(), // "allowed_topics", "blocked_topics", "bias_threshold", etc.
+  configValue: jsonb("config_value").notNull(), // Configuration data
+  isActive: boolean("is_active").notNull().default(true),
+  createdBy: varchar("created_by").references(() => users.id),
+  updatedBy: varchar("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const policyConfigsRelations = relations(policyConfigs, ({ one }) => ({
+  creator: one(users, {
+    fields: [policyConfigs.createdBy],
+    references: [users.id],
+  }),
+  updater: one(users, {
+    fields: [policyConfigs.updatedBy],
+    references: [users.id],
+  }),
+}));
+
+export const insertPolicyConfigSchema = createInsertSchema(policyConfigs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type PolicyConfig = typeof policyConfigs.$inferSelect;
+export type InsertPolicyConfig = z.infer<typeof insertPolicyConfigSchema>;
+
+// Flagged responses for review
+export const flaggedResponses = pgTable("flagged_responses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  messageId: varchar("message_id").notNull().references(() => messages.id),
+  flagType: varchar("flag_type", { length: 50 }).notNull(), // "bias", "policy_violation", "inappropriate", etc.
+  severity: varchar("severity", { length: 20 }).notNull(), // "low", "medium", "high"
+  biasTypes: text("bias_types").array(), // Types of bias detected
+  violatedPolicies: text("violated_policies").array(), // Policies violated
+  explanation: text("explanation"),
+  suggestedRewrite: text("suggested_rewrite"),
+  confidence: integer("confidence"), // 0-100
+  wasBlocked: boolean("was_blocked").notNull().default(false), // Whether response was blocked
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // "pending", "reviewed", "dismissed", "escalated"
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const flaggedResponsesRelations = relations(flaggedResponses, ({ one }) => ({
+  message: one(messages, {
+    fields: [flaggedResponses.messageId],
+    references: [messages.id],
+  }),
+  reviewer: one(users, {
+    fields: [flaggedResponses.reviewedBy],
+    references: [users.id],
+  }),
+}));
+
+export const insertFlaggedResponseSchema = createInsertSchema(flaggedResponses).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type FlaggedResponse = typeof flaggedResponses.$inferSelect;
+export type InsertFlaggedResponse = z.infer<typeof insertFlaggedResponseSchema>;

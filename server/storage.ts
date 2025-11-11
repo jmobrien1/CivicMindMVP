@@ -8,6 +8,9 @@ import {
   tickets,
   analyticsEvents,
   departmentRouting,
+  auditLogs,
+  policyConfigs,
+  flaggedResponses,
   type User,
   type UpsertUser,
   type Document,
@@ -24,6 +27,12 @@ import {
   type InsertAnalyticsEvent,
   type DepartmentRouting,
   type InsertDepartmentRouting,
+  type AuditLog,
+  type InsertAuditLog,
+  type PolicyConfig,
+  type InsertPolicyConfig,
+  type FlaggedResponse,
+  type InsertFlaggedResponse,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -74,6 +83,28 @@ export interface IStorage {
   // Department routing operations
   getDepartmentRouting(): Promise<DepartmentRouting[]>;
   getDepartmentByCategory(category: string): Promise<DepartmentRouting | undefined>;
+
+  // Audit log operations
+  createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+  listAuditLogs(filters: {
+    severity?: string;
+    eventType?: string;
+    startDate?: Date;
+    endDate?: Date;
+    reviewedOnly?: boolean;
+  }): Promise<AuditLog[]>;
+  markAuditLogReviewed(id: string, reviewedBy: string, notes: string): Promise<AuditLog>;
+
+  // Flagged response operations
+  createFlaggedResponse(flagged: InsertFlaggedResponse): Promise<FlaggedResponse>;
+  getPendingFlags(): Promise<FlaggedResponse[]>;
+  updateFlagStatus(id: string, updates: { status?: string; reviewedBy?: string; reviewNotes?: string }): Promise<FlaggedResponse>;
+  getFlagsForMessage(messageId: string): Promise<FlaggedResponse[]>;
+
+  // Policy config operations
+  getActiveConfigs(): Promise<PolicyConfig[]>;
+  upsertPolicyConfig(config: InsertPolicyConfig): Promise<PolicyConfig>;
+  deactivatePolicyConfig(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -362,6 +393,143 @@ export class DatabaseStorage implements IStorage {
     return departments.find(dept => 
       dept.categories?.some(cat => cat.toLowerCase() === category.toLowerCase())
     );
+  }
+
+  // Audit log operations
+  async createAuditLog(logData: InsertAuditLog): Promise<AuditLog> {
+    const [log] = await db.insert(auditLogs).values(logData).returning();
+    return log;
+  }
+
+  async listAuditLogs(filters: {
+    severity?: string;
+    eventType?: string;
+    startDate?: Date;
+    endDate?: Date;
+    reviewedOnly?: boolean;
+  }): Promise<AuditLog[]> {
+    const conditions = [];
+
+    if (filters.severity) {
+      conditions.push(eq(auditLogs.severity, filters.severity));
+    }
+    if (filters.eventType) {
+      conditions.push(eq(auditLogs.eventType, filters.eventType));
+    }
+    if (filters.startDate) {
+      conditions.push(gte(auditLogs.createdAt, filters.startDate));
+    }
+    if (filters.endDate) {
+      conditions.push(sql`${auditLogs.createdAt} <= ${filters.endDate}`);
+    }
+    if (filters.reviewedOnly) {
+      conditions.push(sql`${auditLogs.reviewedAt} IS NOT NULL`);
+    }
+
+    const query = db
+      .select()
+      .from(auditLogs)
+      .orderBy(desc(auditLogs.createdAt));
+
+    if (conditions.length > 0) {
+      return await query.where(and(...conditions));
+    }
+
+    return await query;
+  }
+
+  async markAuditLogReviewed(id: string, reviewedBy: string, notes: string): Promise<AuditLog> {
+    const [log] = await db
+      .update(auditLogs)
+      .set({
+        reviewedBy,
+        reviewNotes: notes,
+        reviewedAt: new Date(),
+      })
+      .where(eq(auditLogs.id, id))
+      .returning();
+    return log;
+  }
+
+  // Flagged response operations
+  async createFlaggedResponse(flaggedData: InsertFlaggedResponse): Promise<FlaggedResponse> {
+    const [flagged] = await db.insert(flaggedResponses).values(flaggedData).returning();
+    return flagged;
+  }
+
+  async getPendingFlags(): Promise<FlaggedResponse[]> {
+    return await db
+      .select()
+      .from(flaggedResponses)
+      .where(eq(flaggedResponses.status, 'pending'))
+      .orderBy(desc(flaggedResponses.createdAt));
+  }
+
+  async updateFlagStatus(
+    id: string,
+    updates: { status?: string; reviewedBy?: string; reviewNotes?: string }
+  ): Promise<FlaggedResponse> {
+    const updateData: any = {};
+    if (updates.status) updateData.status = updates.status;
+    if (updates.reviewedBy) {
+      updateData.reviewedBy = updates.reviewedBy;
+      updateData.reviewedAt = new Date();
+    }
+    if (updates.reviewNotes) updateData.reviewNotes = updates.reviewNotes;
+
+    const [flagged] = await db
+      .update(flaggedResponses)
+      .set(updateData)
+      .where(eq(flaggedResponses.id, id))
+      .returning();
+    return flagged;
+  }
+
+  async getFlagsForMessage(messageId: string): Promise<FlaggedResponse[]> {
+    return await db
+      .select()
+      .from(flaggedResponses)
+      .where(eq(flaggedResponses.messageId, messageId))
+      .orderBy(desc(flaggedResponses.createdAt));
+  }
+
+  // Policy config operations
+  async getActiveConfigs(): Promise<PolicyConfig[]> {
+    return await db
+      .select()
+      .from(policyConfigs)
+      .where(eq(policyConfigs.isActive, true))
+      .orderBy(desc(policyConfigs.updatedAt));
+  }
+
+  async upsertPolicyConfig(configData: InsertPolicyConfig): Promise<PolicyConfig> {
+    const [config] = await db
+      .insert(policyConfigs)
+      .values(configData)
+      .onConflictDoUpdate({
+        target: policyConfigs.name,
+        set: {
+          ...configData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return config;
+  }
+
+  async deactivatePolicyConfig(id: string): Promise<void> {
+    await db
+      .update(policyConfigs)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(policyConfigs.id, id));
+  }
+
+  // Get all messages for sentiment analytics
+  async getAllMessages(): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .orderBy(desc(messages.createdAt));
   }
 }
 
