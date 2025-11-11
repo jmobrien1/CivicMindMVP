@@ -98,6 +98,7 @@ export interface IStorage {
 
   // Flagged response operations
   createFlaggedResponse(flagged: InsertFlaggedResponse): Promise<FlaggedResponse>;
+  getAllFlags(): Promise<FlaggedResponse[]>;
   getPendingFlags(): Promise<FlaggedResponse[]>;
   updateFlagStatus(id: string, updates: { status?: string; reviewedBy?: string; reviewNotes?: string }): Promise<FlaggedResponse>;
   getFlagsForMessage(messageId: string): Promise<FlaggedResponse[]>;
@@ -461,6 +462,13 @@ export class DatabaseStorage implements IStorage {
   async createFlaggedResponse(flaggedData: InsertFlaggedResponse): Promise<FlaggedResponse> {
     const [flagged] = await db.insert(flaggedResponses).values(flaggedData).returning();
     return flagged;
+  }
+
+  async getAllFlags(): Promise<FlaggedResponse[]> {
+    return await db
+      .select()
+      .from(flaggedResponses)
+      .orderBy(desc(flaggedResponses.createdAt));
   }
 
   async getPendingFlags(): Promise<FlaggedResponse[]> {

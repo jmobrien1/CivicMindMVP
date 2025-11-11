@@ -818,4 +818,198 @@ export async function registerRoutes(app: Express) {
       res.status(500).json({ error: "Failed to get transparency data" });
     }
   });
+
+  // ===== ADMIN DASHBOARD ENDPOINTS =====
+
+  // Get flagged responses with filters
+  app.get("/api/admin/flagged-responses", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      // Check if user is admin
+      if (user.role !== 'admin' && user.role !== 'super_admin') {
+        return res.status(403).json({ error: "Unauthorized - Admin access required" });
+      }
+
+      const { status, severity, flagType } = req.query;
+      
+      // Get all flagged responses (not just pending)
+      let flaggedResponses = await storage.getAllFlags();
+      
+      // Apply filters
+      if (status && status !== 'all') {
+        flaggedResponses = flaggedResponses.filter(f => f.status === status);
+      }
+      if (severity && severity !== 'all') {
+        flaggedResponses = flaggedResponses.filter(f => f.severity === severity);
+      }
+      if (flagType && flagType !== 'all') {
+        flaggedResponses = flaggedResponses.filter(f => f.flagType === flagType);
+      }
+
+      res.json(flaggedResponses);
+    } catch (error) {
+      console.error("Get flagged responses error:", error);
+      res.status(500).json({ error: "Failed to fetch flagged responses" });
+    }
+  });
+
+  // Update flagged response status
+  app.patch("/api/admin/flagged-responses/:id", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      if (user.role !== 'admin' && user.role !== 'super_admin') {
+        return res.status(403).json({ error: "Unauthorized - Admin access required" });
+      }
+
+      const { id } = req.params;
+      const { status, reviewNotes } = req.body;
+
+      const updated = await storage.updateFlagStatus(id, {
+        status,
+        reviewedBy: user.claims.sub,
+        reviewNotes,
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Update flagged response error:", error);
+      res.status(500).json({ error: "Failed to update flagged response" });
+    }
+  });
+
+  // Get audit logs with filters
+  app.get("/api/admin/audit-logs", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      if (user.role !== 'admin' && user.role !== 'super_admin') {
+        return res.status(403).json({ error: "Unauthorized - Admin access required" });
+      }
+
+      const { severity, eventType, startDate, endDate, reviewedOnly } = req.query;
+
+      const logs = await storage.listAuditLogs({
+        severity: severity as string,
+        eventType: eventType as string,
+        startDate: startDate ? new Date(startDate as string) : undefined,
+        endDate: endDate ? new Date(endDate as string) : undefined,
+        reviewedOnly: reviewedOnly === 'true',
+      });
+
+      res.json(logs);
+    } catch (error) {
+      console.error("Get audit logs error:", error);
+      res.status(500).json({ error: "Failed to fetch audit logs" });
+    }
+  });
+
+  // Mark audit log as reviewed
+  app.patch("/api/admin/audit-logs/:id/review", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      if (user.role !== 'admin' && user.role !== 'super_admin') {
+        return res.status(403).json({ error: "Unauthorized - Admin access required" });
+      }
+
+      const { id } = req.params;
+      const { notes } = req.body;
+
+      const reviewed = await storage.markAuditLogReviewed(id, user.claims.sub, notes || '');
+
+      res.json(reviewed);
+    } catch (error) {
+      console.error("Review audit log error:", error);
+      res.status(500).json({ error: "Failed to review audit log" });
+    }
+  });
+
+  // Get policy configurations
+  app.get("/api/admin/policy-configs", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      if (user.role !== 'admin' && user.role !== 'super_admin') {
+        return res.status(403).json({ error: "Unauthorized - Admin access required" });
+      }
+
+      const configs = await storage.getActiveConfigs();
+      res.json(configs);
+    } catch (error) {
+      console.error("Get policy configs error:", error);
+      res.status(500).json({ error: "Failed to fetch policy configurations" });
+    }
+  });
+
+  // Create or update policy configuration
+  app.post("/api/admin/policy-configs", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      if (user.role !== 'super_admin') {
+        return res.status(403).json({ error: "Unauthorized - Super admin access required" });
+      }
+
+      const { name, configType, configValue, description } = req.body;
+
+      const config = await storage.upsertPolicyConfig({
+        name,
+        configType,
+        configValue,
+        description,
+        isActive: true,
+      });
+
+      // Invalidate guardrails cache when config changes
+      guardrails.invalidateCache();
+
+      res.json(config);
+    } catch (error) {
+      console.error("Update policy config error:", error);
+      res.status(500).json({ error: "Failed to update policy configuration" });
+    }
+  });
+
+  // Get dashboard statistics
+  app.get("/api/admin/stats", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      
+      if (user.role !== 'admin' && user.role !== 'super_admin') {
+        return res.status(403).json({ error: "Unauthorized - Admin access required" });
+      }
+
+      const [flaggedResponses, auditLogs] = await Promise.all([
+        storage.getAllFlags(),
+        storage.listAuditLogs({}),
+      ]);
+
+      // Calculate statistics
+      const stats = {
+        totalFlagged: flaggedResponses.length,
+        pendingReview: flaggedResponses.filter(f => f.status === 'pending').length,
+        blockedResponses: flaggedResponses.filter(f => f.wasBlocked).length,
+        autoRewrites: auditLogs.filter(l => l.eventType === 'bias_auto_rewrite').length,
+        severityBreakdown: {
+          high: flaggedResponses.filter(f => f.severity === 'high').length,
+          medium: flaggedResponses.filter(f => f.severity === 'medium').length,
+          low: flaggedResponses.filter(f => f.severity === 'low').length,
+        },
+        biasTypeBreakdown: flaggedResponses.reduce((acc, f) => {
+          f.biasTypes?.forEach(type => {
+            acc[type] = (acc[type] || 0) + 1;
+          });
+          return acc;
+        }, {} as Record<string, number>),
+        recentEvents: auditLogs.slice(0, 10),
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error("Get stats error:", error);
+      res.status(500).json({ error: "Failed to fetch statistics" });
+    }
+  });
 }
