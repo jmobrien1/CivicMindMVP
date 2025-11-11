@@ -16,39 +16,28 @@ import AdminFaqs from "@/pages/admin/faqs";
 import AdminTickets from "@/pages/admin/tickets";
 import AdminAnalytics from "@/pages/admin/analytics";
 
-function Router() {
+function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, isLoading } = useAuth();
 
-  return (
-    <Switch>
-      {/* Public routes */}
-      <Route path="/" component={Landing} />
-      <Route path="/transparency" component={Transparency} />
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
-      {/* Admin routes - require authentication */}
-      {isLoading || !isAuthenticated ? null : (
-        <>
-          <Route path="/admin/dashboard" component={AdminDashboard} />
-          <Route path="/admin/documents" component={AdminDocuments} />
-          <Route path="/admin/faqs" component={AdminFaqs} />
-          <Route path="/admin/tickets" component={AdminTickets} />
-          <Route path="/admin/analytics" component={AdminAnalytics} />
-        </>
-      )}
+  if (!isAuthenticated) {
+    window.location.href = "/api/login";
+    return null;
+  }
 
-      {/* Fallback to 404 */}
-      <Route component={NotFound} />
-    </Switch>
-  );
+  return <Component />;
 }
 
-function AdminLayout() {
+function App() {
   const [location] = useLocation();
   const isAdminRoute = location.startsWith("/admin");
-
-  if (!isAdminRoute) {
-    return <Router />;
-  }
 
   const style = {
     "--sidebar-width": "16rem",
@@ -56,27 +45,36 @@ function AdminLayout() {
   };
 
   return (
-    <SidebarProvider style={style as React.CSSProperties}>
-      <div className="flex h-screen w-full">
-        <AppSidebar />
-        <div className="flex flex-col flex-1">
-          <header className="flex items-center gap-2 p-4 border-b">
-            <SidebarTrigger data-testid="button-sidebar-toggle" />
-          </header>
-          <main className="flex-1 overflow-auto p-8">
-            <Router />
-          </main>
-        </div>
-      </div>
-    </SidebarProvider>
-  );
-}
-
-function App() {
-  return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AdminLayout />
+        {isAdminRoute ? (
+          <SidebarProvider style={style as React.CSSProperties}>
+            <div className="flex h-screen w-full">
+              <AppSidebar />
+              <div className="flex flex-col flex-1">
+                <header className="flex items-center gap-2 p-4 border-b">
+                  <SidebarTrigger data-testid="button-sidebar-toggle" />
+                </header>
+                <main className="flex-1 overflow-auto p-8">
+                  <Switch>
+                    <Route path="/admin/dashboard" component={() => <ProtectedRoute component={AdminDashboard} />} />
+                    <Route path="/admin/documents" component={() => <ProtectedRoute component={AdminDocuments} />} />
+                    <Route path="/admin/faqs" component={() => <ProtectedRoute component={AdminFaqs} />} />
+                    <Route path="/admin/tickets" component={() => <ProtectedRoute component={AdminTickets} />} />
+                    <Route path="/admin/analytics" component={() => <ProtectedRoute component={AdminAnalytics} />} />
+                    <Route component={NotFound} />
+                  </Switch>
+                </main>
+              </div>
+            </div>
+          </SidebarProvider>
+        ) : (
+          <Switch>
+            <Route path="/" component={Landing} />
+            <Route path="/transparency" component={Transparency} />
+            <Route component={NotFound} />
+          </Switch>
+        )}
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>

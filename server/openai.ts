@@ -57,9 +57,8 @@ Rules:
 - Suggest "Would you like to speak with a staff member?" for complex questions
 - Format responses clearly with line breaks for readability`;
 
-    // the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
     const response = await openai.chat.completions.create({
-      model: "gpt-5",
+      model: "gpt-4o",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage }

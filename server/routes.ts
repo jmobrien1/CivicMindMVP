@@ -262,6 +262,7 @@ export async function registerRoutes(app: Express) {
 
       const document = await storage.createDocument({
         title,
+        filename: file.originalname,
         content,
         category: req.body.category || "General",
         department: req.body.department,

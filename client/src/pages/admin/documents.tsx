@@ -31,9 +31,31 @@ export default function AdminDocuments() {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const { toast } = useToast();
 
-  const { data: documents = [], isLoading } = useQuery<Document[]>({
+  const { data: documents = [], isLoading, error } = useQuery<Document[]>({
     queryKey: ["/api/documents", categoryFilter],
+    queryFn: async () => {
+      const url = categoryFilter === "all" 
+        ? "/api/documents"
+        : `/api/documents?category=${categoryFilter}`;
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Failed to load documents: ${res.status} ${errorText}`);
+      }
+      return await res.json();
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "Error loading documents",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
   });
+  
+  if (error) {
+    console.error("Documents load error:", error);
+  }
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {

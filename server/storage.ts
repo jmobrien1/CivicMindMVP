@@ -125,13 +125,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchDocuments(query: string): Promise<Document[]> {
+    // Extract keywords from query (remove common stop words)
+    const stopWords = ['when', 'where', 'what', 'how', 'is', 'are', 'the', 'a', 'an', 'do', 'does', 'can', 'i', 'you', 'about', 'for'];
+    const keywords = query
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(word => word.length > 2 && !stopWords.includes(word));
+
+    if (keywords.length === 0) {
+      // No meaningful keywords, return all active documents
+      return await db
+        .select()
+        .from(documents)
+        .where(eq(documents.isActive, true))
+        .orderBy(desc(documents.createdAt))
+        .limit(5);
+    }
+
+    // Search for documents containing ANY of the keywords
+    const searchConditions = keywords.map(keyword => 
+      sql`${documents.content} ILIKE ${`%${keyword}%`}`
+    );
+
     return await db
       .select()
       .from(documents)
       .where(
         and(
           eq(documents.isActive, true),
-          sql`${documents.content} ILIKE ${'%' + query + '%'}`
+          sql`(${sql.join(searchConditions, sql` OR `)})`
         )
       )
       .orderBy(desc(documents.createdAt))
