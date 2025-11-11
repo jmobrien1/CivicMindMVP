@@ -165,6 +165,50 @@ function detectLanguage(text: string): string {
   return spanishMatches >= 2 ? 'es' : 'en';
 }
 
+export interface SentimentAnalysis {
+  sentiment: 'positive' | 'neutral' | 'negative';
+  score: number;
+  reason?: string;
+}
+
+export async function analyzeSentiment(text: string, wasHelpful?: boolean | null): Promise<SentimentAnalysis> {
+  try {
+    if (wasHelpful === true) {
+      return { sentiment: 'positive', score: 75 };
+    }
+    if (wasHelpful === false) {
+      return { sentiment: 'negative', score: -75 };
+    }
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are a sentiment analysis assistant. Analyze the sentiment of citizen feedback about municipal services. Respond with ONLY a JSON object in this exact format: {\"sentiment\": \"positive\" or \"neutral\" or \"negative\", \"score\": number from -100 to 100, \"reason\": \"brief explanation\"}"
+        },
+        {
+          role: "user",
+          content: `Analyze the sentiment of this feedback: "${text}"`
+        }
+      ],
+      max_completion_tokens: 100,
+    });
+
+    const content = response.choices[0]?.message?.content || '{"sentiment": "neutral", "score": 0}';
+    const parsed = JSON.parse(content.trim());
+    
+    return {
+      sentiment: parsed.sentiment || 'neutral',
+      score: Math.max(-100, Math.min(100, parsed.score || 0)),
+      reason: parsed.reason,
+    };
+  } catch (error) {
+    console.error("Sentiment analysis error:", error);
+    return { sentiment: 'neutral', score: 0 };
+  }
+}
+
 export interface DocumentSummary {
   summary: string;
   keyInsights: string[];

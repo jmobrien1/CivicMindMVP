@@ -2,7 +2,8 @@ import type { Express, Request, Response } from "express";
 import multer from "multer";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { storage } from "./storage";
-import { generateChatResponse, moderateContent, summarizeDocument } from "./openai";
+import { generateChatResponse, moderateContent, summarizeDocument, analyzeSentiment } from "./openai";
+import { extractTextFromImage, isImageFile } from "./ocr";
 import { detectPii, redactPii } from "./utils/pii-detector";
 import { rateLimiter } from "./utils/rate-limiter";
 import { z } from "zod";
@@ -139,16 +140,25 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: "messageId and wasHelpful are required" });
       }
 
+      // Analyze sentiment from feedback
+      const sentimentData = await analyzeSentiment(comment || "", wasHelpful);
+
       await storage.updateMessage(messageId, {
         wasHelpful,
-        feedbackComment: comment,
+        feedbackText: comment,
+        sentiment: sentimentData.sentiment,
+        sentimentScore: sentimentData.score,
       });
 
       // Log analytics event
       await storage.createAnalyticsEvent({
         eventType: "feedback",
         category: wasHelpful ? "positive" : "negative",
-        metadata: { messageId },
+        metadata: { 
+          messageId, 
+          sentiment: sentimentData.sentiment,
+          sentimentScore: sentimentData.score,
+        },
       });
 
       res.json({ success: true });
@@ -248,6 +258,8 @@ export async function registerRoutes(app: Express) {
       const file = req.file;
       let content = "";
       let title = file.originalname;
+      let ocrProcessed = false;
+      let ocrConfidence = 0;
 
       // Extract text from PDF
       if (file.mimetype === "application/pdf") {
@@ -256,8 +268,15 @@ export async function registerRoutes(app: Express) {
         title = file.originalname.replace(".pdf", "");
       } else if (file.mimetype === "text/plain") {
         content = file.buffer.toString("utf-8");
+      } else if (file.mimetype.startsWith("image/") || await isImageFile(file.originalname)) {
+        // Handle image uploads with OCR
+        const ocrResult = await extractTextFromImage(file.buffer);
+        content = ocrResult.text;
+        ocrProcessed = true;
+        ocrConfidence = ocrResult.confidence;
+        title = file.originalname.substring(0, file.originalname.lastIndexOf('.')) || file.originalname;
       } else {
-        return res.status(400).json({ error: "Unsupported file type. Please upload PDF or TXT files." });
+        return res.status(400).json({ error: "Unsupported file type. Please upload PDF, TXT, or image files." });
       }
 
       // Auto-generate summary and key insights
@@ -283,6 +302,8 @@ export async function registerRoutes(app: Express) {
         tags: suggestedTags.length > 0 ? suggestedTags : undefined,
         fileUrl: `/uploads/${file.originalname}`,
         isActive: true,
+        ocrProcessed,
+        ocrConfidence: ocrProcessed ? ocrConfidence : undefined,
       });
 
       res.json(document);
@@ -568,6 +589,28 @@ export async function registerRoutes(app: Express) {
       const feedbackEvents = events.filter(e => e.eventType === "feedback");
       const positiveFeedback = feedbackEvents.filter(e => e.category === "positive").length;
 
+      // Get all messages with sentiment data
+      const allMessages = await storage.getAllMessages();
+      const messagesWithSentiment = allMessages.filter(m => m.sentiment);
+      
+      // Sentiment distribution
+      const sentimentCounts = {
+        positive: messagesWithSentiment.filter(m => m.sentiment === 'positive').length,
+        neutral: messagesWithSentiment.filter(m => m.sentiment === 'neutral').length,
+        negative: messagesWithSentiment.filter(m => m.sentiment === 'negative').length,
+      };
+
+      const sentimentDistribution = [
+        { name: "Positive", value: sentimentCounts.positive, color: "hsl(var(--chart-1))" },
+        { name: "Neutral", value: sentimentCounts.neutral, color: "hsl(var(--chart-3))" },
+        { name: "Negative", value: sentimentCounts.negative, color: "hsl(var(--chart-5))" },
+      ];
+
+      // Average sentiment score
+      const avgSentimentScore = messagesWithSentiment.length > 0
+        ? messagesWithSentiment.reduce((sum, m) => sum + (m.sentimentScore || 0), 0) / messagesWithSentiment.length
+        : 0;
+
       // Query trends (last 30 days)
       const queryTrends = Array.from({ length: 30 }, (_, i) => {
         const date = new Date(now.getTime() - (29 - i) * 24 * 60 * 60 * 1000);
@@ -635,13 +678,14 @@ export async function registerRoutes(app: Express) {
       res.json({
         overview: {
           totalQueries: queryEvents.length,
-          queriesChange: 0, // Could calculate week-over-week change
+          queriesChange: 0,
           avgResponseTime,
           responseTimeChange: 0,
           satisfactionRate: feedbackEvents.length > 0 ? positiveFeedback / feedbackEvents.length : 0,
           satisfactionChange: 0,
           answerRate: queryEvents.length > 0 ? successfulQueries.length / queryEvents.length : 0,
           answerRateChange: 0,
+          avgSentimentScore,
         },
         queryTrends,
         topCategories,
@@ -651,6 +695,7 @@ export async function registerRoutes(app: Express) {
           { name: "Positive", value: positiveFeedback },
           { name: "Negative", value: feedbackEvents.length - positiveFeedback },
         ],
+        sentimentDistribution,
       });
     } catch (error) {
       console.error("Analytics error:", error);

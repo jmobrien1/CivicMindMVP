@@ -280,9 +280,14 @@ export default function AdminDocuments() {
                           </div>
                         </div>
                         
-                        <div className="flex items-center gap-2 ml-9 mt-2">
+                        <div className="flex items-center gap-2 ml-9 mt-2 flex-wrap">
                           {doc.category && <Badge variant="secondary">{doc.category}</Badge>}
                           {doc.department && <Badge variant="outline">{doc.department}</Badge>}
+                          {doc.ocrProcessed && (
+                            <Badge variant="outline" className="text-xs" data-testid={`badge-ocr-${doc.id}`}>
+                              OCR{doc.ocrConfidence ? ` ${doc.ocrConfidence}%` : ''}
+                            </Badge>
+                          )}
                           {doc.tags && doc.tags.length > 0 && doc.tags.slice(0, 3).map((tag: string) => (
                             <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
                           ))}

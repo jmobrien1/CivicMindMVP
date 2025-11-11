@@ -63,6 +63,8 @@ export const documents = pgTable("documents", {
   expiresAt: timestamp("expires_at"), // Optional expiration date
   version: integer("version").notNull().default(1), // Document version number
   previousVersionId: varchar("previous_version_id"), // Reference to previous version
+  ocrProcessed: boolean("ocr_processed").default(false), // Whether OCR was used
+  ocrConfidence: integer("ocr_confidence"), // OCR confidence score 0-100
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -144,6 +146,8 @@ export const messages = pgTable("messages", {
   citations: jsonb("citations"), // Array of {documentId, documentTitle, excerpt}
   wasHelpful: boolean("was_helpful"), // User feedback
   feedbackText: text("feedback_text"), // Optional text feedback
+  sentiment: varchar("sentiment", { length: 20 }), // "positive", "neutral", "negative"
+  sentimentScore: integer("sentiment_score"), // -100 to 100
   flaggedAsPii: boolean("flagged_as_pii").default(false),
   flaggedAsInappropriate: boolean("flagged_as_inappropriate").default(false),
   createdAt: timestamp("created_at").defaultNow(),

@@ -283,6 +283,13 @@ export class DatabaseStorage implements IStorage {
       .orderBy(messages.createdAt);
   }
 
+  async getAllMessages(): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .orderBy(desc(messages.createdAt));
+  }
+
   async updateMessage(id: string, messageData: Partial<Message>): Promise<Message> {
     const [msg] = await db
       .update(messages)

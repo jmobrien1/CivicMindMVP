@@ -13,12 +13,14 @@ interface AnalyticsData {
     satisfactionChange: number;
     answerRate: number;
     answerRateChange: number;
+    avgSentimentScore?: number;
   };
   queryTrends: Array<{ date: string; queries: number; answered: number }>;
   topCategories: Array<{ category: string; count: number; color: string }>;
   hourlyDistribution: Array<{ hour: string; count: number }>;
   responseTimeDistribution: Array<{ range: string; count: number }>;
   feedbackDistribution: Array<{ name: string; value: number }>;
+  sentimentDistribution?: Array<{ name: string; value: number; color: string }>;
 }
 
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
@@ -224,6 +226,52 @@ export default function AdminAnalytics() {
             ) : (
               <div className="h-[300px] flex items-center justify-center text-muted-foreground">
                 No data available
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Citizen Sentiment Analysis</CardTitle>
+            <CardDescription>Sentiment from citizen feedback</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {data?.sentimentDistribution && data.sentimentDistribution.length > 0 && data.sentimentDistribution.some(d => d.value > 0) ? (
+              <div className="space-y-4">
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={data.sentimentDistribution}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={(entry) => `${entry.name}: ${entry.value}`}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {data.sentimentDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+                {data.overview.avgSentimentScore !== undefined && (
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">Average Sentiment Score</p>
+                    <p className="text-2xl font-bold" data-testid="stat-sentiment-score">
+                      {data.overview.avgSentimentScore.toFixed(1)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Scale: -100 (negative) to +100 (positive)</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+                No sentiment data available yet
               </div>
             )}
           </CardContent>
