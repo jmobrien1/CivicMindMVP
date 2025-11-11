@@ -7,6 +7,7 @@ import { extractTextFromImage, isImageFile, getOCRPoolStatus } from "./ocr";
 import { ocrRateLimiter, getRateLimiterStats } from "./rate-limiter";
 import { detectPii, redactPii } from "./utils/pii-detector";
 import { rateLimiter } from "./utils/rate-limiter";
+import { guardrails } from "./guardrails";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { createRequire } from "module";
@@ -84,11 +85,56 @@ export async function registerRoutes(app: Express) {
       });
       const responseTime = Date.now() - startTime;
 
-      // Save assistant message
-      const assistantMessage = await storage.createMessage({
+      // Create a placeholder message to get an ID for guardrails check
+      const placeholderMessage = await storage.createMessage({
         conversationId: conversation.id,
         role: "assistant",
-        content: aiResponse.content,
+        content: "Processing...",
+        citations: [],
+      });
+
+      // Run guardrails check on AI response
+      const guardrailCheck = await guardrails.checkResponse(
+        aiResponse.content,
+        placeholderMessage.id,
+        conversation.id,
+        JSON.stringify({ userQuery: message, documents: documents.slice(0, 3) })
+      );
+
+      // Handle blocked responses
+      if (guardrailCheck.wasBlocked) {
+        // Update the placeholder message with error
+        await storage.updateMessage(placeholderMessage.id, {
+          content: "I apologize, but I cannot provide a response to this query as it may violate our content policies. Our team has been notified and will review this interaction. Please try rephrasing your question or contact support for assistance.",
+        });
+
+        // Log failed response
+        await storage.createAnalyticsEvent({
+          eventType: "query",
+          category: "blocked_response",
+          wasSuccessful: false,
+          responseTime,
+          metadata: { 
+            sessionId,
+            reason: guardrailCheck.reason,
+            biasTypes: guardrailCheck.biasDetected?.biasTypes,
+          },
+        });
+
+        return res.status(200).json({
+          message: await storage.getMessage(placeholderMessage.id),
+          citations: [],
+          wasBlocked: true,
+          reason: guardrailCheck.reason,
+        });
+      }
+
+      // Use rewritten content if available, otherwise use original
+      const finalContent = guardrailCheck.rewrittenContent || aiResponse.content;
+
+      // Update the placeholder message with final content
+      const assistantMessage = await storage.updateMessage(placeholderMessage.id, {
+        content: finalContent,
         citations: aiResponse.citations,
       });
 
