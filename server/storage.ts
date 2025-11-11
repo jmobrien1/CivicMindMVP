@@ -537,14 +537,6 @@ export class DatabaseStorage implements IStorage {
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(policyConfigs.id, id));
   }
-
-  // Get all messages for sentiment analytics
-  async getAllMessages(): Promise<Message[]> {
-    return await db
-      .select()
-      .from(messages)
-      .orderBy(desc(messages.createdAt));
-  }
 }
 
 export const storage = new DatabaseStorage();

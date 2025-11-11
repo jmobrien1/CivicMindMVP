@@ -11,7 +11,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, FileText, HelpCircle, Ticket, BarChart3, MessageCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, FileText, HelpCircle, Ticket, BarChart3, MessageCircle, LogOut, Shield, AlertTriangle, Eye } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,6 +45,29 @@ const menuItems = [
   },
 ];
 
+const guardrailsItems = [
+  {
+    title: "Guardrails Overview",
+    url: "/admin/guardrails",
+    icon: Shield,
+  },
+  {
+    title: "Flagged Responses",
+    url: "/admin/flagged-responses",
+    icon: AlertTriangle,
+  },
+  {
+    title: "Audit Logs",
+    url: "/admin/audit-logs",
+    icon: Eye,
+  },
+  {
+    title: "Policy Configuration",
+    url: "/admin/policy-configs",
+    icon: LayoutDashboard,
+  },
+];
+
 export function AppSidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
@@ -65,6 +88,24 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild isActive={location === item.url}>
+                    <Link href={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Content Guardrails</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {guardrailsItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url}>
                     <Link href={item.url}>

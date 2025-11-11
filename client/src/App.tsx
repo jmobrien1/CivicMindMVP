@@ -16,6 +16,10 @@ import AdminDocuments from "@/pages/admin/documents";
 import AdminFaqs from "@/pages/admin/faqs";
 import AdminTickets from "@/pages/admin/tickets";
 import AdminAnalytics from "@/pages/admin/analytics";
+import AdminGuardrails from "@/pages/admin/guardrails";
+import AdminFlaggedResponses from "@/pages/admin/flagged-responses";
+import AdminAuditLogs from "@/pages/admin/audit-logs";
+import AdminPolicyConfigs from "@/pages/admin/policy-configs";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -64,6 +68,10 @@ function App() {
                     <Route path="/admin/faqs" component={() => <ProtectedRoute component={AdminFaqs} />} />
                     <Route path="/admin/tickets" component={() => <ProtectedRoute component={AdminTickets} />} />
                     <Route path="/admin/analytics" component={() => <ProtectedRoute component={AdminAnalytics} />} />
+                    <Route path="/admin/guardrails" component={() => <ProtectedRoute component={AdminGuardrails} />} />
+                    <Route path="/admin/flagged-responses" component={() => <ProtectedRoute component={AdminFlaggedResponses} />} />
+                    <Route path="/admin/audit-logs" component={() => <ProtectedRoute component={AdminAuditLogs} />} />
+                    <Route path="/admin/policy-configs" component={() => <ProtectedRoute component={AdminPolicyConfigs} />} />
                     <Route component={NotFound} />
                   </Switch>
                 </main>
