@@ -37,8 +37,8 @@ The design system emphasizes trust, professional restraint, and responsive effic
 1. **Document Summarization:** AI-generated summaries and key insights for uploaded documents using GPT-4o.
 2. **Version Control:** Document versioning system with expiration date management for policies and regulations.
 3. **Multi-Language Support:** English and Spanish localization with context-based language switching.
-4. **Sentiment Analysis:** Automatic sentiment detection on citizen feedback using GPT-4o, storing sentiment type (positive/neutral/negative) and numerical scores (-100 to +100). Analytics dashboard displays sentiment distribution pie chart and average sentiment score.
-5. **OCR Processing:** Image document support (JPG, PNG, GIF, BMP, TIFF, WEBP) with automatic text extraction using Tesseract.js and Sharp for preprocessing. Confidence scores tracked and displayed in document management UI.
+4. **Sentiment Analysis:** Automatic sentiment detection on citizen feedback using GPT-4o, storing sentiment type (positive/neutral/negative) and numerical scores (-100 to +100). Analytics dashboard displays sentiment distribution pie chart and average sentiment score. Enhanced with comprehensive logging for processing times and error tracking.
+5. **OCR Processing:** Image document support (JPG, PNG, GIF, BMP, TIFF, WEBP) with automatic text extraction using Tesseract.js and Sharp for preprocessing. Confidence scores tracked and displayed in document management UI. Production optimizations include Tesseract worker pooling (2 reusable workers), rate limiting (10 uploads per 5 minutes), and monitoring endpoint for system health.
 
 **Planned Features**
 
