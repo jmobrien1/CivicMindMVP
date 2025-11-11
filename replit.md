@@ -89,6 +89,90 @@ Automatic language detection and bilingual response system (English/Spanish):
 - `LanguageContext` React context for frontend language state
 - `translations` object provides bilingual UI strings
 
+## Phase 2 Roadmap (Remaining Features)
+
+### Feature 4: Enhanced Analytics with Sentiment Analysis
+**Status:** Planned
+
+Add sentiment analysis to track citizen satisfaction:
+- **Sentiment Detection:** Analyze feedback sentiment (positive/neutral/negative)
+- **Query Intent Classification:** Categorize queries by topic/department
+- **Satisfaction Metrics:** Track resolution rates and helpfulness scores
+- **Trend Analysis:** Identify common concerns and satisfaction trends over time
+- **Dashboard Enhancements:** Add sentiment charts and word clouds
+
+**Implementation Notes:**
+- Use GPT-4o for sentiment analysis on feedback
+- Store sentiment scores in feedback table
+- Create sentiment aggregate queries for dashboard
+- Add time-series charts for sentiment trends
+
+### Feature 5: OCR Processing for Scanned Documents
+**Status:** Planned
+
+Enable text extraction from scanned PDFs and images:
+- **OCR Integration:** Use Tesseract.js or cloud OCR service
+- **Document Processing:** Automatically extract text from uploaded images/scans
+- **Quality Detection:** Identify low-quality scans requiring manual review
+- **Format Support:** Handle JPG, PNG, multi-page PDFs with images
+- **Indexing:** Extract and index OCR text for search/chat
+
+**Implementation Notes:**
+- Add OCR processing in document upload pipeline
+- Store extracted text separately with confidence scores
+- UI indicator for OCR-processed documents
+- Consider cloud services (Google Vision API) for production
+
+### Feature 6: Advanced Bias Detection and Audit Logging
+**Status:** Planned
+
+Implement AI safety monitoring and compliance logging:
+- **Bias Detection:** Scan responses for potential bias indicators
+- **Audit Trail:** Log all AI interactions with timestamps and users
+- **Compliance Reports:** Generate audit reports for municipal compliance
+- **Alert System:** Flag potentially problematic responses for review
+- **Retention Policies:** Implement data retention according to municipal requirements
+
+**Implementation Notes:**
+- Create `audit_logs` table with comprehensive logging
+- Implement bias detection keywords/patterns in OpenAI responses
+- Add admin audit log viewer with filtering
+- Export capabilities for compliance reporting
+
+### Feature 7: SMS/Text Message Channel
+**Status:** Planned
+
+Enable citizen inquiries via SMS text messages:
+- **SMS Integration:** Twilio integration for text messaging
+- **Phone Number Registration:** Allow citizens to register phone numbers
+- **Message Threading:** Track conversation threads per phone number
+- **Rate Limiting:** Prevent SMS abuse with usage limits
+- **Bilingual SMS:** Support English and Spanish text messages
+
+**Implementation Notes:**
+- Use Twilio API for SMS send/receive
+- Create webhook endpoint for incoming messages
+- Store phone number sessions in database
+- Character limit handling for SMS responses
+- Cost monitoring for SMS usage
+
+### Feature 8: Municipal Ticketing System Integration
+**Status:** Planned
+
+Connect with external ticketing systems:
+- **Tyler Technologies Integration:** Connect with Tyler ERP/CRM systems
+- **CivicPlus Integration:** API integration for service requests
+- **Webhook Support:** Bi-directional sync for ticket status updates
+- **Ticket Creation:** Create tickets directly from chat escalations
+- **Status Tracking:** Track ticket status and notify citizens
+
+**Implementation Notes:**
+- Research Tyler Technologies and CivicPlus APIs
+- Create integration abstraction layer for multiple systems
+- Add webhook handlers for status updates
+- UI for configuring integrations per municipality
+- Ticket mapping between systems
+
 ## System Architecture
 
 ### Frontend Architecture
