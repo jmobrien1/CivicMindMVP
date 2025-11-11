@@ -62,7 +62,6 @@ export async function registerRoutes(app: Express) {
       if (!conversation) {
         conversation = await storage.createConversation({
           sessionId,
-          title: message.substring(0, 100),
         });
       }
 
@@ -91,8 +90,6 @@ export async function registerRoutes(app: Express) {
         role: "assistant",
         content: aiResponse.content,
         citations: aiResponse.citations,
-        responseTime,
-        wasSuccessful: aiResponse.wasSuccessful,
       });
 
       // Log analytics event
@@ -188,28 +185,18 @@ export async function registerRoutes(app: Express) {
       const messages = await storage.getMessages(conversation.id);
       const lastUserMessage = messages.reverse().find(m => m.role === "user");
       const question = lastUserMessage?.content || "No question found";
-      const category = lastUserMessage?.category;
-
-      // Determine department routing
-      const department = category 
-        ? (await storage.getDepartmentByCategory(category))?.department 
-        : undefined;
 
       const ticket = await storage.createTicket({
-        sessionId,
         question,
-        category,
         userEmail: email,
         userName,
         userPhone,
         status: "open",
-        department,
       });
 
       // Log analytics event
       await storage.createAnalyticsEvent({
         eventType: "ticket_created",
-        category,
         metadata: { ticketId: ticket.id },
       });
 
@@ -233,12 +220,11 @@ export async function registerRoutes(app: Express) {
   app.patch("/api/tickets/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
-      const { status, assignedTo, resolution } = req.body;
+      const { status, assignedTo } = req.body;
 
       const ticket = await storage.updateTicket(id, {
         status,
         assignedTo,
-        resolution,
       });
 
       res.json(ticket);
