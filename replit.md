@@ -39,10 +39,23 @@ The design system emphasizes trust, professional restraint, and responsive effic
 3. **Multi-Language Support:** English and Spanish localization with context-based language switching.
 4. **Sentiment Analysis:** Automatic sentiment detection on citizen feedback using GPT-4o, storing sentiment type (positive/neutral/negative) and numerical scores (-100 to +100). Analytics dashboard displays sentiment distribution pie chart and average sentiment score. Enhanced with comprehensive logging for processing times and error tracking.
 5. **OCR Processing:** Image document support (JPG, PNG, GIF, BMP, TIFF, WEBP) with automatic text extraction using Tesseract.js and Sharp for preprocessing. Confidence scores tracked and displayed in document management UI. Production optimizations include Tesseract worker pooling (2 reusable workers), rate limiting (10 uploads per 5 minutes), and monitoring endpoint for system health.
+6. **Enhanced Guardrails & Bias Detection (Core Complete - November 2025):**
+   - **Bias Detection Service:** GPT-4o powered analysis detecting 6 types of bias (demographic, socioeconomic, political, geographic, language, accessibility) with severity levels (low/medium/high) and confidence scores.
+   - **Policy Guardrails:** Configurable topic boundaries with allowed/blocked topic lists, severity thresholds for block/rewrite/allow decisions, and ordered severity ranking (low < medium < high).
+   - **Audit Logging:** Comprehensive event tracking for all guardrail decisions with PII redaction, reviewer workflow, and exportable audit trails.
+   - **Flagged Response Management:** Automatic flagging of biased content with severity classification, suggested rewrites, and review status tracking.
+   - **Auto-Rewrite System:** Medium-severity bias triggers automatic rewrite with secondary validation before delivery.
+   - **Integration:** Synchronous guardrails checks in chat flow with graceful keyword-based fallback when OpenAI unavailable.
+   - **Caching:** Policy config caching (5-min TTL) with manual invalidation for performance optimization.
+   - **FERPA Compliance:** PII redaction using existing pii-detector utility before persistence in all audit logs and flagged responses.
+
+**In Progress**
+
+Admin dashboard for reviewing flagged responses and bias patterns, FERPA-specific student privacy protections.
 
 **Planned Features**
 
-Advanced bias detection and audit logging, SMS/text message channel integration (Twilio), and municipal ticketing system integration (Tyler Technologies, CivicPlus).
+SMS/text message channel integration (Twilio), municipal ticketing system integration (Tyler Technologies, CivicPlus).
 
 ## External Dependencies
 
