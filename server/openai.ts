@@ -111,7 +111,12 @@ export async function moderateContent(text: string): Promise<{ flagged: boolean;
       flagged: result.flagged,
       categories: flaggedCategories,
     };
-  } catch (error) {
+  } catch (error: any) {
+    // Replit AI integration doesn't support moderation endpoint - skip gracefully
+    if (error?.message?.includes("not supported") || error?.status === 400) {
+      console.log("Content moderation not supported by AI provider - skipping");
+      return { flagged: false, categories: [] };
+    }
     console.error("Moderation error:", error);
     return { flagged: false, categories: [] };
   }
