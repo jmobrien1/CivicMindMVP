@@ -47,9 +47,9 @@ export default function GuardrailsDashboard() {
   }
 
   const severityData = [
-    { name: "High", value: stats?.severityBreakdown.high || 0, color: SEVERITY_COLORS.high },
-    { name: "Medium", value: stats?.severityBreakdown.medium || 0, color: SEVERITY_COLORS.medium },
-    { name: "Low", value: stats?.severityBreakdown.low || 0, color: SEVERITY_COLORS.low },
+    { name: "High", value: stats?.severityBreakdown?.high ?? 0, color: SEVERITY_COLORS.high },
+    { name: "Medium", value: stats?.severityBreakdown?.medium ?? 0, color: SEVERITY_COLORS.medium },
+    { name: "Low", value: stats?.severityBreakdown?.low ?? 0, color: SEVERITY_COLORS.low },
   ];
 
   const biasTypeData = Object.entries(stats?.biasTypeBreakdown || {})

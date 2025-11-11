@@ -53,14 +53,21 @@ function updateUserSession(
 
 async function upsertUser(
   claims: any,
-) {
+): Promise<string> {
+  // Whitelist role claim to only accept 'admin' or 'super_admin', default to 'admin'
+  const role = claims["role"] === "super_admin" ? "super_admin" : "admin";
+  
   await storage.upsertUser({
     id: claims["sub"],
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
+    role,
   });
+  
+  // Return the role so it can be added to the session
+  return role;
 }
 
 export async function setupAuth(app: Express) {
@@ -75,9 +82,11 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
+    const user = {} as any;
     updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
+    const role = await upsertUser(tokens.claims());
+    // Add role to session user object for authorization checks
+    user.role = role;
     verified(null, user);
   };
 

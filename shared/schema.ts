@@ -298,7 +298,7 @@ export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 // Policy configurations for guardrails
 export const policyConfigs = pgTable("policy_configs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: varchar("name", { length: 200 }).notNull(),
+  name: varchar("name", { length: 200 }).notNull().unique(),
   description: text("description"),
   configType: varchar("config_type", { length: 50 }).notNull(), // "allowed_topics", "blocked_topics", "bias_threshold", etc.
   configValue: jsonb("config_value").notNull(), // Configuration data

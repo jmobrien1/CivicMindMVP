@@ -39,7 +39,7 @@ The design system emphasizes trust, professional restraint, and responsive effic
 3. **Multi-Language Support:** English and Spanish localization with context-based language switching.
 4. **Sentiment Analysis:** Automatic sentiment detection on citizen feedback using GPT-4o, storing sentiment type (positive/neutral/negative) and numerical scores (-100 to +100). Analytics dashboard displays sentiment distribution pie chart and average sentiment score. Enhanced with comprehensive logging for processing times and error tracking.
 5. **OCR Processing:** Image document support (JPG, PNG, GIF, BMP, TIFF, WEBP) with automatic text extraction using Tesseract.js and Sharp for preprocessing. Confidence scores tracked and displayed in document management UI. Production optimizations include Tesseract worker pooling (2 reusable workers), rate limiting (10 uploads per 5 minutes), and monitoring endpoint for system health.
-6. **Enhanced Guardrails & Bias Detection (Core Complete - November 2025):**
+6. **Enhanced Guardrails & Bias Detection (Completed - November 2025):**
    - **Bias Detection Service:** GPT-4o powered analysis detecting 6 types of bias (demographic, socioeconomic, political, geographic, language, accessibility) with severity levels (low/medium/high) and confidence scores.
    - **Policy Guardrails:** Configurable topic boundaries with allowed/blocked topic lists, severity thresholds for block/rewrite/allow decisions, and ordered severity ranking (low < medium < high).
    - **Audit Logging:** Comprehensive event tracking for all guardrail decisions with PII redaction, reviewer workflow, and exportable audit trails.
@@ -48,10 +48,12 @@ The design system emphasizes trust, professional restraint, and responsive effic
    - **Integration:** Synchronous guardrails checks in chat flow with graceful keyword-based fallback when OpenAI unavailable.
    - **Caching:** Policy config caching (5-min TTL) with manual invalidation for performance optimization.
    - **FERPA Compliance:** PII redaction using existing pii-detector utility before persistence in all audit logs and flagged responses.
-
-**In Progress**
-
-Admin dashboard for reviewing flagged responses and bias patterns, FERPA-specific student privacy protections.
+   - **Admin Dashboard:** Complete administrative interface with four pages:
+     * **Guardrails Overview:** Real-time statistics, severity distribution charts, bias type breakdown, and recent events timeline
+     * **Flagged Responses:** Review interface with status filters, detailed view dialog, approve/reject workflow with notes
+     * **Audit Logs:** Comprehensive event viewer with severity and event type filtering, review status tracking
+     * **Policy Configuration:** Super_admin-only editor for bias thresholds (block/rewrite/allow levels), blocked topics management, and allowed topics management
+   - **Authorization:** Role-based access control with OIDC role claim mapping; admin users can view all pages, super_admin users can modify policy configurations; role stored in both database and session for efficient authorization checks.
 
 **Planned Features**
 
