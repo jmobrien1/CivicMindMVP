@@ -3,7 +3,8 @@ import multer from "multer";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { storage } from "./storage";
 import { generateChatResponse, moderateContent, summarizeDocument, analyzeSentiment } from "./openai";
-import { extractTextFromImage, isImageFile } from "./ocr";
+import { extractTextFromImage, isImageFile, getOCRPoolStatus } from "./ocr";
+import { ocrRateLimiter, getRateLimiterStats } from "./rate-limiter";
 import { detectPii, redactPii } from "./utils/pii-detector";
 import { rateLimiter } from "./utils/rate-limiter";
 import { z } from "zod";
@@ -249,7 +250,7 @@ export async function registerRoutes(app: Express) {
 
   // ===== DOCUMENT ENDPOINTS =====
   
-  app.post("/api/documents", isAuthenticated, upload.single("file"), async (req, res) => {
+  app.post("/api/documents", isAuthenticated, ocrRateLimiter.middleware(), upload.single("file"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No file uploaded" });
@@ -359,7 +360,7 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  app.post("/api/documents/:id/new-version", isAuthenticated, upload.single("file"), async (req, res) => {
+  app.post("/api/documents/:id/new-version", isAuthenticated, ocrRateLimiter.middleware(), upload.single("file"), async (req, res) => {
     try {
       const { id } = req.params;
       
@@ -501,6 +502,30 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error("Delete FAQ error:", error);
       res.status(500).json({ error: "Failed to delete FAQ" });
+    }
+  });
+
+  // ===== MONITORING ENDPOINTS =====
+  
+  app.get("/api/system/status", isAuthenticated, async (req, res) => {
+    try {
+      const user = req.user as any;
+      if (user?.role !== 'super_admin') {
+        return res.status(403).json({ error: "Unauthorized - super admin only" });
+      }
+
+      const status = {
+        ocr: {
+          pool: getOCRPoolStatus(),
+        },
+        rateLimit: getRateLimiterStats(),
+        timestamp: new Date().toISOString(),
+      };
+
+      res.json(status);
+    } catch (error) {
+      console.error("System status error:", error);
+      res.status(500).json({ error: "Failed to get system status" });
     }
   });
 

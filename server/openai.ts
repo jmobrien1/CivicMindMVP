@@ -172,13 +172,19 @@ export interface SentimentAnalysis {
 }
 
 export async function analyzeSentiment(text: string, wasHelpful?: boolean | null): Promise<SentimentAnalysis> {
+  const startTime = Date.now();
+  
   try {
     if (wasHelpful === true) {
+      console.log('[Sentiment] Using explicit positive feedback');
       return { sentiment: 'positive', score: 75 };
     }
     if (wasHelpful === false) {
+      console.log('[Sentiment] Using explicit negative feedback');
       return { sentiment: 'negative', score: -75 };
     }
+
+    console.log('[Sentiment] Analyzing text with GPT-4o...');
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -196,16 +202,31 @@ export async function analyzeSentiment(text: string, wasHelpful?: boolean | null
     });
 
     const content = response.choices[0]?.message?.content || '{"sentiment": "neutral", "score": 0}';
-    const parsed = JSON.parse(content.trim());
     
-    return {
+    let parsed;
+    try {
+      parsed = JSON.parse(content.trim());
+    } catch (parseError) {
+      console.error('[Sentiment] JSON parse error:', parseError);
+      console.error('[Sentiment] Raw response:', content);
+      throw new Error('Failed to parse sentiment response');
+    }
+    
+    const result = {
       sentiment: parsed.sentiment || 'neutral',
       score: Math.max(-100, Math.min(100, parsed.score || 0)),
       reason: parsed.reason,
     };
+
+    const processingTime = Date.now() - startTime;
+    console.log(`[Sentiment] Analysis complete in ${processingTime}ms: ${result.sentiment} (${result.score})`);
+    
+    return result;
   } catch (error) {
-    console.error("Sentiment analysis error:", error);
-    return { sentiment: 'neutral', score: 0 };
+    const processingTime = Date.now() - startTime;
+    console.error(`[Sentiment] Analysis failed after ${processingTime}ms:`, error);
+    
+    return { sentiment: 'neutral', score: 0, reason: 'Fallback due to processing error' };
   }
 }
 
