@@ -19,7 +19,7 @@ export default function Landing() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MessageCircle className="h-6 w-6 text-primary" />
-            <span className="font-medium text-lg">CivicMind</span>
+            <span className="font-medium text-lg">West Newbury Assistant</span>
           </div>
           <nav className="flex items-center gap-4">
             <a href="#features" className="text-sm hover:text-primary transition-colors">Features</a>
@@ -35,10 +35,10 @@ export default function Landing() {
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-medium mb-4 text-foreground">
-              AI-Powered Citizen Services
+              West Newbury AI Assistant
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Get instant answers to your questions about town services, 24/7. CivicMind provides transparent, trustworthy AI assistance for municipal information.
+              Get instant answers to your questions about West Newbury town services, 24/7. Our AI assistant provides transparent, trustworthy assistance for all your municipal information needs.
             </p>
           </div>
 
@@ -125,15 +125,15 @@ export default function Landing() {
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-medium mb-3">Common Questions</h2>
-            <p className="text-muted-foreground">See how CivicMind can help you</p>
+            <p className="text-muted-foreground">See how our AI assistant can help you</p>
           </div>
 
           <div className="grid gap-4">
             {[
-              { question: "When is trash pickup?", category: "Sanitation" },
-              { question: "How do I apply for a building permit?", category: "Permits" },
-              { question: "When are property taxes due?", category: "Tax" },
-              { question: "What are town hall hours?", category: "General Info" },
+              { question: "When are Select Board meetings held?", category: "Town Government" },
+              { question: "What are the town office hours?", category: "General Info" },
+              { question: "When is trash and recycling pickup?", category: "Sanitation" },
+              { question: "How do I contact the Board of Health?", category: "Health Services" },
             ].map((example, idx) => (
               <Card 
                 key={idx} 
@@ -163,7 +163,7 @@ export default function Landing() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MessageCircle className="h-4 w-4" />
-              <span>CivicMind - AI for Every Municipality</span>
+              <span>Town of West Newbury - AI Assistant</span>
             </div>
             <div className="flex items-center gap-6 text-sm">
               <a href="/transparency" className="text-muted-foreground hover:text-foreground transition-colors">

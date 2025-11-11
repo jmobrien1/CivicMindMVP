@@ -77,7 +77,7 @@ export function AppSidebar() {
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
           <MessageCircle className="h-6 w-6 text-primary" />
-          <span className="font-medium text-lg">CivicMind</span>
+          <span className="font-medium text-lg">West Newbury Assistant</span>
         </div>
         <p className="text-xs text-muted-foreground mt-1">Admin Portal</p>
       </SidebarHeader>

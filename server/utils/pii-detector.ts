@@ -1,4 +1,4 @@
-// PII detection utilities for CivicMind
+// PII detection utilities for municipal AI platform
 
 export interface PiiDetectionResult {
   hasPii: boolean;

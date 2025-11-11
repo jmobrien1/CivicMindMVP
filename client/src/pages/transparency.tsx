@@ -38,7 +38,7 @@ export default function Transparency() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MessageCircle className="h-6 w-6 text-primary" />
-            <span className="font-medium text-lg">CivicMind</span>
+            <span className="font-medium text-lg">West Newbury Assistant</span>
           </div>
           <nav className="flex items-center gap-4">
             <Button variant="ghost" asChild>
@@ -52,7 +52,7 @@ export default function Transparency() {
         <div className="mb-12">
           <h1 className="text-4xl font-medium mb-3">AI Transparency Report</h1>
           <p className="text-lg text-muted-foreground mb-2">
-            Real-time statistics showing how CivicMind serves our community
+            Real-time statistics showing how our AI assistant serves West Newbury
           </p>
           <p className="text-sm text-muted-foreground" data-testid="text-last-updated">
             Last updated: {data?.lastUpdated || new Date().toLocaleString()}
@@ -187,10 +187,10 @@ export default function Transparency() {
           </CardHeader>
           <CardContent className="prose prose-sm max-w-none">
             <p className="text-muted-foreground">
-              This transparency dashboard provides real-time statistics on how CivicMind serves our community. All data is aggregated and anonymized to protect citizen privacy. The AI assistant is designed with built-in safeguards including PII filtering, content moderation, and rate limiting to ensure responsible, trustworthy service.
+              This transparency dashboard provides real-time statistics on how our AI assistant serves West Newbury. All data is aggregated and anonymized to protect citizen privacy. The AI assistant is designed with built-in safeguards including PII filtering, content moderation, and rate limiting to ensure responsible, trustworthy service.
             </p>
             <p className="text-muted-foreground mt-4">
-              Every response provided by CivicMind includes citations to official town documents. If the AI cannot confidently answer a question, it offers to connect you with a staff member who can help.
+              Every response includes citations to official town documents. If the AI cannot confidently answer a question, it offers to connect you with a town staff member who can help.
             </p>
           </CardContent>
         </Card>

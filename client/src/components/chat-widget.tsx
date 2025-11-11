@@ -120,7 +120,7 @@ export function ChatWidget({ isOpenExternal, onOpenChange, initialMessage }: Cha
         <div className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5 text-primary" />
           <div>
-            <div className="font-medium text-sm" data-testid="text-chat-title">CivicMind Assistant</div>
+            <div className="font-medium text-sm" data-testid="text-chat-title">West Newbury Assistant</div>
             <div className="text-xs text-muted-foreground">Ask about town services</div>
           </div>
         </div>

@@ -4,6 +4,20 @@
 
 CivicMind is a turnkey AI platform and managed service for small to mid-sized US municipalities. It enables towns to deploy compliant AI assistants for citizens to get instant answers about municipal services 24/7. The platform prioritizes transparency, accessibility, and trust through citations, policy guardrails, and public analytics. Its core purpose is to provide a trusted public-sector AI layer, allowing municipalities to safely adopt AI without requiring in-house expertise, addressing the lack of secure and affordable AI paths for smaller US towns. The project targets New England and Mid-Atlantic municipalities, aiming for a significant share of the annual TAM.
 
+## West Newbury Demo Branch (November 2025)
+
+**Current Branch:** demo/test - West Newbury, MA demonstration
+
+This branch contains a complete rebrand of the CivicMind platform for the Town of West Newbury, Massachusetts, featuring:
+
+- **Visual Rebrand:** Deep forest green color scheme (#004422 primary, #E6F0E9 light green background, #D4AF37 muted gold accent)
+- **Branding:** All "CivicMind" references replaced with "West Newbury Assistant" throughout the application
+- **Custom Content:** 6 West Newbury-specific documents seeded (Select Board meetings, office hours, trash/recycling, permits, health services, property taxes)
+- **Localized FAQ:** FAQ questions tailored to West Newbury services and departments
+- **Demo Flows:** Complete citizen engagement flow (landing page → FAQ → chat) and employee admin portal with guardrails dashboard
+
+This demo showcases the platform's white-label capabilities and municipal-specific customization features.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

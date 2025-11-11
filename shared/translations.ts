@@ -13,7 +13,7 @@ export const translations = {
       send: "Send",
       helpful: "Was this helpful?",
       speakToStaff: "Speak to Staff",
-      poweredBy: "Powered by CivicMind AI",
+      poweredBy: "Powered by West Newbury Assistant",
     },
     // Transparency page
     transparency: {
@@ -38,7 +38,7 @@ export const translations = {
       send: "Enviar",
       helpful: "¿Fue útil?",
       speakToStaff: "Hablar con Personal",
-      poweredBy: "Impulsado por CivicMind AI",
+      poweredBy: "Impulsado por Asistente de West Newbury",
     },
     // Transparency page
     transparency: {

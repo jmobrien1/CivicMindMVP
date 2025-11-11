@@ -38,7 +38,7 @@ export default function AdminDashboard() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-medium mb-2" data-testid="heading-dashboard">Dashboard</h1>
-        <p className="text-muted-foreground">Overview of CivicMind AI assistant performance</p>
+        <p className="text-muted-foreground">Overview of West Newbury AI assistant performance</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
