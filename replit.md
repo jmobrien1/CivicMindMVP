@@ -12,6 +12,83 @@ CivicMind is a turnkey AI platform and managed service designed for small to mid
 
 Preferred communication style: Simple, everyday language.
 
+## Phase 2 Feature Enhancements
+
+### Document Summarization System (November 2025)
+**Status:** Completed
+
+AI-powered automatic summarization of uploaded documents with key insights extraction:
+- Auto-generates 2-3 paragraph summaries for all documents over 500 characters upon upload
+- Extracts 3-8 key insights highlighting main decisions, budget allocations, dates, and public impact
+- Suggests relevant tags for improved document organization and search
+- Manual regeneration capability via Sparkles button for refining summaries
+- Optimized prompts for municipal documents: budgets, meeting minutes, policies, bylaws
+- Uses GPT-4o with JSON response format for structured output
+- Frontend displays summaries in highlighted card with expandable key insights view
+- Version tracking support added to documents schema
+
+**Technical Implementation:**
+- New `summarizeDocument()` function in `server/openai.ts`
+- Schema additions: `summary`, `keyInsights`, `version`, `previousVersionId` fields
+- Endpoint: `POST /api/documents/:id/regenerate-summary` for manual regeneration
+- Automatic invocation during document upload for content > 500 chars
+
+### Document Version Control & Expiration (November 2025)
+**Status:** Completed
+
+Complete version tracking and lifecycle management for municipal documents:
+- **Version Control:** Automatic versioning when documents are updated, maintains complete history
+- **Version Chain:** Links each version to its predecessor via `previousVersionId`
+- **Version API:** `GET /api/documents/:id/versions` retrieves full version history
+- **New Version Upload:** `POST /api/documents/:id/new-version` creates new version with file upload
+- **Expiration Management:** Set expiration dates on documents to auto-hide after specified date
+- **Expiration Filtering:** Active documents query automatically filters expired documents
+- **UI Controls:** Expandable document cards show version info and expiration date picker
+- **Visual Indicators:** Amber warning badge shows upcoming expiration dates
+
+**Use Cases:**
+- Update FY2025 budget → creates v2, maintains v1 in history
+- Town bylaws amended → new version preserves old regulations for reference
+- Temporary COVID policies → set expiration date for automatic archival
+- Seasonal schedules → expire and replace automatically each year
+
+**Technical Implementation:**
+- `createDocumentVersion()` in storage layer creates versioned copies
+- `getDocumentVersions()` traverses version chain recursively
+- Expiration filtering in base `getDocuments()` query using SQL date comparison
+- Frontend state management for expiration date picker per document
+
+### Multi-Language Support (November 2025)
+**Status:** Completed
+
+Automatic language detection and bilingual response system (English/Spanish):
+- **Language Detection:** Heuristic-based detection analyzing Spanish indicators (accents, question words, articles)
+- **AI Response Translation:** GPT-4o automatically responds in detected language
+- **Frontend Translations:** Translation system for UI elements with LanguageContext provider
+- **Translation File:** `shared/translations.ts` contains UI strings for English and Spanish
+- **Detection Accuracy:** 2+ Spanish indicators required for Spanish classification
+- **Supported Languages:** English (en) and Spanish (es)
+
+**Detection Indicators:**
+- Spanish question words: dónde, cuándo, cómo, qué, quién
+- Spanish articles: el, la, los, las, un, una
+- Spanish verbs: está, están, hay, tiene, son, es
+- Accented characters: áéíóúñ¿¡
+- Municipal terms: basura, reciclaje, permiso, impuestos
+
+**Use Cases:**
+- Spanish-speaking citizen asks "¿Cuándo es la recolección de basura?"
+- AI detects Spanish, responds in Spanish with document citations
+- Frontend can switch UI language via LanguageContext
+- Bilingual municipalities serve both English and Spanish speakers seamlessly
+
+**Technical Implementation:**
+- `detectLanguage()` function in `server/openai.ts` with regex-based detection
+- System prompt dynamically adds language instruction based on detection
+- `ChatResponse` interface includes `detectedLanguage` field
+- `LanguageContext` React context for frontend language state
+- `translations` object provides bilingual UI strings
+
 ## System Architecture
 
 ### Frontend Architecture

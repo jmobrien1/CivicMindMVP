@@ -53,12 +53,16 @@ export const documents = pgTable("documents", {
   filename: varchar("filename", { length: 500 }).notNull(),
   fileUrl: text("file_url"), // Path to stored file
   content: text("content").notNull(), // Extracted text content
+  summary: text("summary"), // AI-generated summary
+  keyInsights: jsonb("key_insights"), // Array of key points extracted by AI
   category: varchar("category", { length: 100 }), // "Budget", "Bylaws", "Permits", etc.
   department: varchar("department", { length: 100 }), // "Town Clerk", "DPW", etc.
   tags: text("tags").array(), // Additional tags for search
   uploadedBy: varchar("uploaded_by").references(() => users.id),
   isActive: boolean("is_active").notNull().default(true),
   expiresAt: timestamp("expires_at"), // Optional expiration date
+  version: integer("version").notNull().default(1), // Document version number
+  previousVersionId: varchar("previous_version_id"), // Reference to previous version
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

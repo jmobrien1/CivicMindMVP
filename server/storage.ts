@@ -37,6 +37,10 @@ export interface IStorage {
   createDocument(document: InsertDocument): Promise<Document>;
   getDocuments(category?: string): Promise<Document[]>;
   getDocument(id: string): Promise<Document | undefined>;
+  getDocumentById(id: string): Promise<Document | undefined>;
+  updateDocument(id: string, document: Partial<Document>): Promise<Document>;
+  createDocumentVersion(originalId: string, updates: Partial<InsertDocument>): Promise<Document>;
+  getDocumentVersions(documentId: string): Promise<Document[]>;
   deleteDocument(id: string): Promise<void>;
   searchDocuments(query: string): Promise<Document[]>;
 
@@ -101,23 +105,80 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getDocuments(category?: string): Promise<Document[]> {
+    const now = new Date();
+    const baseConditions = [
+      eq(documents.isActive, true),
+      sql`(${documents.expiresAt} IS NULL OR ${documents.expiresAt} > ${now})`
+    ];
+
     if (category && category !== "all") {
       return await db
         .select()
         .from(documents)
-        .where(and(eq(documents.category, category), eq(documents.isActive, true)))
+        .where(and(eq(documents.category, category), ...baseConditions))
         .orderBy(desc(documents.createdAt));
     }
     return await db
       .select()
       .from(documents)
-      .where(eq(documents.isActive, true))
+      .where(and(...baseConditions))
       .orderBy(desc(documents.createdAt));
   }
 
   async getDocument(id: string): Promise<Document | undefined> {
     const [doc] = await db.select().from(documents).where(eq(documents.id, id));
     return doc;
+  }
+
+  async getDocumentById(id: string): Promise<Document | undefined> {
+    const [doc] = await db.select().from(documents).where(eq(documents.id, id));
+    return doc;
+  }
+
+  async updateDocument(id: string, documentData: Partial<Document>): Promise<Document> {
+    const [updated] = await db
+      .update(documents)
+      .set(documentData)
+      .where(eq(documents.id, id))
+      .returning();
+    return updated;
+  }
+
+  async createDocumentVersion(originalId: string, updates: Partial<InsertDocument>): Promise<Document> {
+    const original = await this.getDocumentById(originalId);
+    if (!original) {
+      throw new Error("Original document not found");
+    }
+
+    const newVersion = original.version + 1;
+
+    const [newDoc] = await db.insert(documents).values({
+      ...updates,
+      version: newVersion,
+      previousVersionId: originalId,
+      isActive: true,
+    } as InsertDocument).returning();
+
+    await db.update(documents)
+      .set({ isActive: false })
+      .where(eq(documents.id, originalId));
+
+    return newDoc;
+  }
+
+  async getDocumentVersions(documentId: string): Promise<Document[]> {
+    const versions: Document[] = [];
+    let currentId: string | null = documentId;
+
+    while (currentId) {
+      const doc = await this.getDocumentById(currentId);
+      if (!doc) break;
+      
+      versions.push(doc);
+      currentId = doc.previousVersionId;
+    }
+
+    return versions.reverse();
   }
 
   async deleteDocument(id: string): Promise<void> {

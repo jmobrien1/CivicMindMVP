@@ -22,6 +22,7 @@ export interface ChatResponse {
   }>;
   category?: string;
   wasSuccessful: boolean;
+  detectedLanguage?: string;
 }
 
 export async function generateChatResponse(
@@ -29,6 +30,8 @@ export async function generateChatResponse(
   context: ChatContext
 ): Promise<ChatResponse> {
   try {
+    const detectedLanguage = detectLanguage(userMessage);
+    
     // Build context from documents and previous messages
     const documentContext = context.documents
       .map(doc => `Document: ${doc.title}\nCategory: ${doc.category}\nContent: ${doc.content.substring(0, 500)}...`)
@@ -37,6 +40,10 @@ export async function generateChatResponse(
     const conversationHistory = context.previousMessages
       .map(msg => `${msg.role}: ${msg.content}`)
       .join("\n");
+
+    const languageInstruction = detectedLanguage === 'es' 
+      ? '\n\nIMPORTANT: The user is asking in Spanish. You MUST respond in Spanish (Español).'
+      : '\n\nIMPORTANT: Respond in English.';
 
     const systemPrompt = `You are a helpful municipal AI assistant for a town government. Your role is to:
 1. Answer questions about town services using ONLY the provided documents
@@ -55,7 +62,7 @@ Rules:
 - Only use information from the provided documents
 - If asked about something not in the documents, politely say you don't have that information
 - Suggest "Would you like to speak with a staff member?" for complex questions
-- Format responses clearly with line breaks for readability`;
+- Format responses clearly with line breaks for readability${languageInstruction}`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -85,6 +92,7 @@ Rules:
       citations: citations.length > 0 ? citations : undefined,
       category,
       wasSuccessful: true,
+      detectedLanguage,
     };
   } catch (error) {
     console.error("OpenAI chat error:", error);
@@ -141,4 +149,82 @@ function detectCategory(query: string): string {
   }
   
   return "General";
+}
+
+function detectLanguage(text: string): string {
+  const spanishIndicators = [
+    /\b(dónde|cuándo|cómo|qué|quién|por qué|cuántos|cuál)\b/i,
+    /\b(el|la|los|las|un|una|unos|unas)\b/i,
+    /\b(está|están|hay|tiene|son|es|puedo|puede)\b/i,
+    /\b(basura|reciclaje|permiso|impuestos|escuela|horario)\b/i,
+    /[áéíóúñ¿¡]/i,
+  ];
+
+  const spanishMatches = spanishIndicators.filter(regex => regex.test(text)).length;
+  
+  return spanishMatches >= 2 ? 'es' : 'en';
+}
+
+export interface DocumentSummary {
+  summary: string;
+  keyInsights: string[];
+  suggestedTags: string[];
+}
+
+export async function summarizeDocument(
+  title: string,
+  content: string,
+  category?: string
+): Promise<DocumentSummary> {
+  try {
+    const truncatedContent = content.substring(0, 12000);
+    
+    const systemPrompt = `You are an expert at summarizing municipal documents like budgets, meeting minutes, policies, and regulations.
+
+Your task is to create a concise summary and extract key insights from the provided document.
+
+Return your response in this exact JSON format:
+{
+  "summary": "A 2-3 paragraph summary of the document's main content",
+  "keyInsights": ["First key point or decision", "Second key point", "Third key point"],
+  "suggestedTags": ["tag1", "tag2", "tag3"]
+}
+
+Focus on:
+- Main decisions, budget allocations, or policy changes
+- Important dates, deadlines, or timelines
+- Financial figures and amounts
+- Action items or requirements
+- Public impact and changes to services
+
+Keep the summary clear and factual. Extract 3-8 key insights.`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { 
+          role: "user", 
+          content: `Document Title: ${title}\nCategory: ${category || "General"}\n\nContent:\n${truncatedContent}` 
+        }
+      ],
+      response_format: { type: "json_object" },
+      max_completion_tokens: 800,
+    });
+
+    const result = JSON.parse(response.choices[0]?.message?.content || "{}");
+    
+    return {
+      summary: result.summary || "Summary unavailable",
+      keyInsights: Array.isArray(result.keyInsights) ? result.keyInsights : [],
+      suggestedTags: Array.isArray(result.suggestedTags) ? result.suggestedTags.slice(0, 5) : [],
+    };
+  } catch (error) {
+    console.error("Document summarization error:", error);
+    return {
+      summary: "Summary generation failed. Please review the document manually.",
+      keyInsights: [],
+      suggestedTags: [],
+    };
+  }
 }

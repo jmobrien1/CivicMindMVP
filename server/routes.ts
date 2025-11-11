@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import multer from "multer";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { storage } from "./storage";
-import { generateChatResponse, moderateContent } from "./openai";
+import { generateChatResponse, moderateContent, summarizeDocument } from "./openai";
 import { detectPii, redactPii } from "./utils/pii-detector";
 import { rateLimiter } from "./utils/rate-limiter";
 import { z } from "zod";
@@ -260,14 +260,28 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: "Unsupported file type. Please upload PDF or TXT files." });
       }
 
+      // Auto-generate summary and key insights
+      let summary: string | undefined;
+      let keyInsights: any[] | undefined;
+      let suggestedTags: string[] = [];
+
+      if (content.length > 500) {
+        const summaryData = await summarizeDocument(title, content, req.body.category || "General");
+        summary = summaryData.summary;
+        keyInsights = summaryData.keyInsights;
+        suggestedTags = summaryData.suggestedTags;
+      }
+
       const document = await storage.createDocument({
         title,
         filename: file.originalname,
         content,
+        summary,
+        keyInsights,
         category: req.body.category || "General",
         department: req.body.department,
+        tags: suggestedTags.length > 0 ? suggestedTags : undefined,
         fileUrl: `/uploads/${file.originalname}`,
-        mimeType: file.mimetype,
         isActive: true,
       });
 
@@ -297,6 +311,109 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error("Delete document error:", error);
       res.status(500).json({ error: "Failed to delete document" });
+    }
+  });
+
+  app.post("/api/documents/:id/regenerate-summary", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const document = await storage.getDocumentById(id);
+      
+      if (!document) {
+        return res.status(404).json({ error: "Document not found" });
+      }
+
+      const summaryData = await summarizeDocument(document.title, document.content, document.category || "General");
+      
+      const updated = await storage.updateDocument(id, {
+        summary: summaryData.summary,
+        keyInsights: summaryData.keyInsights,
+        tags: summaryData.suggestedTags,
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Regenerate summary error:", error);
+      res.status(500).json({ error: "Failed to regenerate summary" });
+    }
+  });
+
+  app.post("/api/documents/:id/new-version", isAuthenticated, upload.single("file"), async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const file = req.file;
+      let content = "";
+      let title = file.originalname;
+
+      if (file.mimetype === "application/pdf") {
+        const pdfData = await pdfParse(file.buffer);
+        content = pdfData.text;
+        title = file.originalname.replace(".pdf", "");
+      } else if (file.mimetype === "text/plain") {
+        content = file.buffer.toString("utf-8");
+      } else {
+        return res.status(400).json({ error: "Unsupported file type" });
+      }
+
+      let summary: string | undefined;
+      let keyInsights: any[] | undefined;
+      let suggestedTags: string[] = [];
+
+      if (content.length > 500) {
+        const summaryData = await summarizeDocument(title, content, req.body.category || "General");
+        summary = summaryData.summary;
+        keyInsights = summaryData.keyInsights;
+        suggestedTags = summaryData.suggestedTags;
+      }
+
+      const newVersion = await storage.createDocumentVersion(id, {
+        title,
+        filename: file.originalname,
+        content,
+        summary,
+        keyInsights,
+        category: req.body.category,
+        department: req.body.department,
+        tags: suggestedTags.length > 0 ? suggestedTags : undefined,
+        fileUrl: `/uploads/${file.originalname}`,
+      });
+
+      res.json(newVersion);
+    } catch (error) {
+      console.error("Create version error:", error);
+      res.status(500).json({ error: "Failed to create new version" });
+    }
+  });
+
+  app.get("/api/documents/:id/versions", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const versions = await storage.getDocumentVersions(id);
+      res.json(versions);
+    } catch (error) {
+      console.error("Get versions error:", error);
+      res.status(500).json({ error: "Failed to get document versions" });
+    }
+  });
+
+  app.patch("/api/documents/:id/expiration", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { expiresAt } = req.body;
+
+      const updated = await storage.updateDocument(id, {
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+      });
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Update expiration error:", error);
+      res.status(500).json({ error: "Failed to update expiration date" });
     }
   });
 
