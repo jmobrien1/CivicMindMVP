@@ -1,9 +1,18 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageCircle, Shield, BarChart3, FileText, Clock, Users } from "lucide-react";
 import { ChatWidget } from "@/components/chat-widget";
 
 export default function Landing() {
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInitialMessage, setChatInitialMessage] = useState<string | undefined>();
+
+  const handleOpenChat = (message?: string) => {
+    setChatInitialMessage(message);
+    setChatOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-10">
@@ -34,7 +43,12 @@ export default function Landing() {
           </div>
 
           <div className="flex justify-center gap-4 mb-16">
-            <Button size="lg" className="gap-2" data-testid="button-try-demo">
+            <Button 
+              size="lg" 
+              className="gap-2" 
+              onClick={() => handleOpenChat()}
+              data-testid="button-try-demo"
+            >
               <MessageCircle className="h-5 w-5" />
               Try the Assistant
             </Button>
@@ -121,7 +135,12 @@ export default function Landing() {
               { question: "When are property taxes due?", category: "Tax" },
               { question: "What are town hall hours?", category: "General Info" },
             ].map((example, idx) => (
-              <Card key={idx} className="hover-elevate active-elevate-2 cursor-pointer" data-testid={`example-question-${idx}`}>
+              <Card 
+                key={idx} 
+                className="hover-elevate active-elevate-2 cursor-pointer" 
+                onClick={() => handleOpenChat(example.question)}
+                data-testid={`example-question-${idx}`}
+              >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -158,7 +177,11 @@ export default function Landing() {
         </div>
       </footer>
 
-      <ChatWidget />
+      <ChatWidget 
+        isOpenExternal={chatOpen}
+        onOpenChange={setChatOpen}
+        initialMessage={chatInitialMessage}
+      />
     </div>
   );
 }

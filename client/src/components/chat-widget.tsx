@@ -7,9 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { MessageCircle, X, Send, ThumbsUp, ThumbsDown, User, FileText } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { Message } from "@shared/schema";
 
-interface ChatMessage extends Message {
+interface ChatMessage {
+  id: string;
+  role: string;
+  content: string;
+  wasHelpful?: boolean | null;
   citations?: Array<{
     documentId: string;
     documentTitle: string;
@@ -17,11 +20,34 @@ interface ChatMessage extends Message {
   }>;
 }
 
-export function ChatWidget() {
-  const [isOpen, setIsOpen] = useState(false);
+interface ChatWidgetProps {
+  isOpenExternal?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  initialMessage?: string;
+}
+
+export function ChatWidget({ isOpenExternal, onOpenChange, initialMessage }: ChatWidgetProps = {}) {
+  const [isOpenInternal, setIsOpenInternal] = useState(false);
   const [input, setInput] = useState("");
   const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
   const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // Use external state if provided, otherwise use internal state
+  const isOpen = isOpenExternal !== undefined ? isOpenExternal : isOpenInternal;
+  const setIsOpen = (open: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(open);
+    } else {
+      setIsOpenInternal(open);
+    }
+  };
+  
+  // Handle initial message when chat opens
+  useEffect(() => {
+    if (isOpen && initialMessage && !input) {
+      setInput(initialMessage);
+    }
+  }, [isOpen, initialMessage]);
 
   const { data: messages = [], refetch } = useQuery<ChatMessage[]>({
     queryKey: ["/api/chat/messages", sessionId],
