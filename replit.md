@@ -12,11 +12,13 @@ This branch contains a complete rebrand of the CivicMind platform for the Town o
 
 - **Visual Rebrand:** Deep forest green color scheme (#004422 primary, #E6F0E9 light green background, #D4AF37 muted gold accent)
 - **Branding:** All "CivicMind" references replaced with "West Newbury Assistant" throughout the application
-- **Custom Content:** 6 West Newbury-specific documents seeded (Select Board meetings, office hours, trash/recycling, permits, health services, property taxes)
+- **Custom Content:** 6 West Newbury-specific documents seeded (2025 holiday trash schedule, property tax procedures, boat/motor vehicle excise tax, water utility billing, town hall hours/contact)
+- **Meeting Integration:** 6 upcoming Select Board and Planning Board meetings seeded with realistic dates, locations, and agendas (Nov-Dec 2025)
+- **Service Request Routing:** Keyword-based detection routes citizen complaints/issues to 7 West Newbury departments with automatic ticket creation
 - **Localized FAQ:** FAQ questions tailored to West Newbury services and departments
-- **Demo Flows:** Complete citizen engagement flow (landing page → FAQ → chat) and employee admin portal with guardrails dashboard
+- **Demo Flows:** Complete citizen engagement flow (landing page → FAQ → chat → meeting queries → service requests) and employee admin portal with guardrails dashboard
 
-This demo showcases the platform's white-label capabilities and municipal-specific customization features.
+This demo showcases the platform's white-label capabilities, municipal-specific customization, and intelligent request routing.
 
 ## User Preferences
 
@@ -68,6 +70,22 @@ The design system emphasizes trust, professional restraint, and responsive effic
      * **Audit Logs:** Comprehensive event viewer with severity and event type filtering, review status tracking
      * **Policy Configuration:** Super_admin-only editor for bias thresholds (block/rewrite/allow levels), blocked topics management, and allowed topics management
    - **Authorization:** Role-based access control with OIDC role claim mapping; admin users can view all pages, super_admin users can modify policy configurations; role stored in both database and session for efficient authorization checks.
+
+7. **Service Request Routing (Completed - November 2025):**
+   - **Intent Detection:** Keyword-based detection of service requests (complaints, issues, problems, broken items, help requests) in chat messages
+   - **Department Routing:** Automatic routing to 7 West Newbury departments (Town Clerk, DPW, Building Inspector, Board of Health, Assessor, Finance, General Inquiry) based on category detection
+   - **Ticket Creation:** Automatic ticket creation with conversation context, user details, and department assignment for staff follow-up
+   - **User Notification:** AI response includes ticket ID, routed department, and expected response time (1-2 business days)
+   - **Analytics Tracking:** Service request events logged for transparency dashboard with ticket metadata
+
+8. **Meeting/Calendar Integration (Completed - November 2025):**
+   - **Meetings Schema:** Database table for town meetings with composite index on (boardName, meetingDate) for optimized queries
+   - **Storage Methods:** Seven storage operations (create, read, update, delete, list, upcoming, next-by-board) with filtering by board name and public visibility
+   - **API Endpoints:** RESTful routes for upcoming meetings and next meeting by board with query parameter validation (limit clamped 1-50)
+   - **Intent Detection:** Pre-AI keyword detection for meeting queries ("next meeting", "Select Board", "Planning Board", "schedule", "agenda") to provide instant database responses
+   - **Formatted Responses:** Human-readable responses with date/time formatting (using date-fns), location details, and agenda summaries with source citations
+   - **Seeded Data:** 6 upcoming Select Board and Planning Board meetings (Nov-Dec 2025) with realistic West Newbury dates, Town Hall location (381 Main Street), and detailed agendas
+   - **Performance:** Meeting queries bypass AI generation entirely, reducing token usage and response latency while ensuring accurate scheduling information
 
 **Planned Features**
 
