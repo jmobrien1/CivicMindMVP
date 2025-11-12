@@ -12,13 +12,18 @@ This branch contains a complete rebrand of the CivicMind platform for the Town o
 
 - **Visual Rebrand:** Deep forest green color scheme (#004422 primary, #E6F0E9 light green background, #D4AF37 muted gold accent)
 - **Branding:** All "CivicMind" references replaced with "West Newbury Assistant" throughout the application
-- **Custom Content:** 6 West Newbury-specific documents seeded (2025 holiday trash schedule, property tax procedures, boat/motor vehicle excise tax, water utility billing, town hall hours/contact)
+- **Custom Content:** 12 West Newbury-specific structured knowledge entries seeded (2025 holiday trash schedule, property tax procedures, boat/motor vehicle excise tax, water utility billing, town hall hours/contact, department information)
 - **Meeting Integration:** 6 upcoming Select Board and Planning Board meetings seeded with realistic dates, locations, and agendas (Nov-Dec 2025)
 - **Service Request Routing:** Keyword-based detection routes citizen complaints/issues to 7 West Newbury departments with automatic ticket creation
-- **Localized FAQ:** FAQ questions tailored to West Newbury services and departments
-- **Demo Flows:** Complete citizen engagement flow (landing page → FAQ → chat → meeting queries → service requests) and employee admin portal with guardrails dashboard
+- **Dual-Persona Demo Experience (COMPLETED - Nov 2025):**
+  - **Landing Page:** Two-panel role selector (Resident vs Staff) with four CivicMind pillars value proposition
+  - **Resident Portal:** Chat interface with 5 sample questions, accurate West Newbury answers from structured knowledge, contact information
+  - **Staff Portal:** Ticket queue with 3 seeded sample tickets, overview statistics, demo reset functionality, role switcher
+  - **Demo Infrastructure:** DemoContext for role state, DEMO_MODE flag (defaults to true in dev), auto-seeding with idempotent checks
+  - **E2E Validation:** Comprehensive tests verify resident chat, staff dashboard, role switching, and demo reset
+- **Demo Flows:** Complete citizen engagement flow (landing page → resident chat → meeting queries → service requests) and employee admin portal (staff dashboard → ticket management → role switching)
 
-This demo showcases the platform's white-label capabilities, municipal-specific customization, and intelligent request routing.
+This demo showcases the platform's white-label capabilities, municipal-specific customization, intelligent request routing, and dual-persona user experience ready for Select Board presentation.
 
 ## User Preferences
 
