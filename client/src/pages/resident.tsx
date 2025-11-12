@@ -41,7 +41,7 @@ const SAMPLE_QUESTIONS = [
 ];
 
 export default function ResidentPage() {
-  const { setRole, residentSessionId, setResidentSessionId } = useDemo();
+  const { setRole, residentSessionId, setResidentSessionId, isDemoMode } = useDemo();
   const [, setLocation] = useLocation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -215,9 +215,24 @@ export default function ResidentPage() {
               </div>
             </div>
           </div>
-          <Button variant="outline" size="sm" asChild>
-            <a href="/transparency">How this AI works →</a>
-          </Button>
+          <div className="flex items-center gap-2">
+            {isDemoMode && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  setRole("staff");
+                  setLocation("/staff");
+                }}
+                data-testid="button-switch-staff"
+              >
+                Switch to Staff View →
+              </Button>
+            )}
+            <Button variant="outline" size="sm" asChild>
+              <a href="/transparency">How this AI works →</a>
+            </Button>
+          </div>
         </div>
       </header>
 

@@ -1,0 +1,112 @@
+After logging back in and testing the new build, I found that some improvements have landed but major gaps remain. Residents now see a “Speak to a person” button that opens a confirmation modal instead of creating a ticket automatically
+civic-mind-mvp-obrienmike.replit.app
+. The transparency page offers clear explanations of what data is used and shows charts and guardrail statistics
+civic-mind-mvp-obrienmike.replit.app
+. The staff portal has been restructured into a true admin area with demo metrics and an AI operations report, plus a “Switch to Resident View” button
+civic-mind-mvp-obrienmike.replit.app
+civic-mind-mvp-obrienmike.replit.app
+.
+
+However, the assistant still fails to answer basic questions accurately. It does not provide the weekly trash schedule, bi‑weekly recycling rule or 6 AM curbside requirement, instead instructing users to check the website
+civic-mind-mvp-obrienmike.replit.app
+. It cannot list property tax due dates or payment options
+civic-mind-mvp-obrienmike.replit.app
+, nor can it tell residents the town office hours and address
+civic-mind-mvp-obrienmike.replit.app
+. When asked about Select Board meetings it simply claims “no upcoming meetings scheduled”
+civic-mind-mvp-obrienmike.replit.app
+. In every case there are no citations to official sources, and the AI apologizes for missing data. The Board of Health contact response still omits the actual phone extensions and suggests visiting the website
+civic-mind-mvp-obrienmike.replit.app
+. The resident header lacks a role switcher and the root page is still a single “Get Started” button, so users cannot choose between Resident and Staff modes. The staff portal’s metrics remain at zero answered questions, and there are no seeded tickets to demonstrate escalation.
+
+To address these issues, I’ve prepared a revised, detailed prompt for Replit’s AI. It directs the system to load the structured West Newbury data into its knowledge base, generate accurate, citation‑backed answers for trash schedules, tax deadlines, office hours, Board of Health contacts, and Select Board meetings, implement a two‑panel landing page with clear Resident and Staff options, add a role switcher in the header for DEMO_MODE, split transparency into resident and staff views, seed demo tickets and documents, polish the escalation flow, and refine the marketing copy to highlight the four CivicMind pillars. The complete prompt is available here:
+
+You are an expert AI engineer working on the CivicMind – West Newbury project.
+Your task is to refine the demo so that it meets both the product requirements and high standards for usability, accuracy and sales appeal.
+Use the feedback below from QA, product management, CX/UX/UI research and executive sales/marketing to guide the next iteration.
+
+Key Findings From Latest QA Pass
+
+Resident answers lack real data – The AI assistant still responds to basic questions with generic text. It fails to provide actual West Newbury facts (weekly trash pickup, bi‑weekly recycling, 6 AM curbside rule, quarterly tax due dates, office hours & address, Board of Health contact extensions, Select Board meeting schedule). Every answer should draw from the Town Information Extract provided earlier and include clickable citations.
+
+Knowledge base incomplete – Sample questions are present, but the retrieval layer hasn’t been loaded with the real information. The assistant often replies with “I don’t have specific information…” and tells users to check the town website. That’s unacceptable for a demo.
+
+Role selection still missing – The root URL redirects to login. There is no dual‑panel landing page where a user chooses Resident vs Staff. The staff portal has a “Switch to Resident View” button but the resident side has no corresponding link back to Staff, and there is no role‑switcher in the header.
+
+Transparency split incomplete – The current /transparency page is a single view. It shows aggregated metrics but doesn’t offer a deeper AI operations report for staff vs. a simple snapshot for residents.
+
+Escalation flow improved but needs polish – The new “Speak to a person” button now shows a confirmation dialog instead of auto‑creating tickets. Good, but the contact information is still missing for the Board of Health question, and the follow‑up line “Would you like help finding other town services?” appears even when it’s not relevant.
+
+Marketing & value proposition – The home page is still a single “Get Started” button and generic copy. It doesn’t communicate the four CivicMind pillars (24/7 availability, built‑in safeguards, human escalation, transparency) nor invite the user to select a role.
+
+Admin portal accessible but rough – The staff portal (/staff) shows metrics, a demo overview and a link to the full admin portal. However, the queries answered count is zero, tickets list is empty and the knowledge base isn’t surfaced. Make sure demo data is seeded and accessible.
+
+Required Improvements
+A. Resident Experience
+
+Load real West Newbury data – Populate the knowledge base with the structured information extracted earlier (trash & recycling schedule, property tax quarters, office hours & address, Board of Health contacts, department phone numbers, meeting schedules, and recent news). Ensure the retrieval component surfaces this data.
+
+Accurate answers with citations – Update the answer generation so that each response includes the specific facts and a citation link to the official source (e.g., footnote numbers linking to wnewbury.org pages). Remove generic statements like “I don’t have specific information.” Example:
+
+Question: “When is trash and recycling pickup for my house, and are there any holiday delays?”
+
+Answer: “West Newbury picks up trash weekly on your regular trash day and recycling every other week using 65‑gallon carts. Place barrels curbside by 6 AM. After observed holidays the schedule shifts by one day【467】【468】. For questions, call the Board of Health at (978) 363‑1100 x1118【469】.”
+
+Polish escalation – Keep the “Speak to a person” button, but only show it if the assistant cannot answer or if the user expresses frustration. Do not append unnecessary follow‑ups (“Would you like help finding other services?”). Prefill the confirmation modal with the user’s question and the AI response.
+
+Show citations inline – At the end of each answer, show a small numbered list of citations (e.g., [1][2]) that links to the sources. This builds trust and satisfies transparency.
+
+Add role switcher – When DEMO_MODE is true, display a compact role switcher in the resident header (e.g., “Resident View | Staff View”). Clicking should toggle between /resident and /staff without logging out.
+
+Improve UI & microcopy – Use the West Newbury color palette (#004422 and #D4AF37) and refine the callouts. Remove the old “Get Started” hero on /resident. Instead, greet the user with “Ask about West Newbury services” and sample questions.
+
+B. Landing Page & Demo Mode
+
+Dual‑panel landing page – On the root URL, implement a simple page with two cards:
+
+Resident Demo – Describes the citizen experience (instant answers, citations, human escalation) and links to /resident.
+
+Staff Demo – Describes the staff portal (tickets, analytics, guardrails) and links to /staff with auto‑login as demo_staff.
+Include the four CivicMind pillars as succinct bullet points. Use the West Newbury seal/logo and colors.
+
+Demo badge & environment flag – Continue using the DEMO_MODE flag to auto‑authenticate staff and show “DEMO” in the header. Allow switching roles from any view.
+
+C. Transparency
+
+Resident transparency snapshot – Keep the existing /transparency page but ensure the metrics reflect real usage (questions answered, satisfaction rates, guardrail stats). Emphasize plain‑language explanations of data sources, privacy, and safeguards.
+
+AI operations report (staff only) – Create a separate path (/staff/ai-report or link from the staff dashboard) that shows deeper analytics: top topics, guardrail events, flagged examples (anonymized), feedback scores and audit logs. Restrict access to staff.
+
+D. Staff Portal & Demo Data
+
+Seed demo tickets – Populate the staff portal with a few sample tickets representing escalations from the resident assistant (e.g., trash questions, property tax clarifications). Each ticket should display the question, AI answer, and status (new/in progress/resolved).
+
+Seed knowledge base & documents – Ensure that the knowledge base tab lists the uploaded official documents (bylaws, tax guidelines, meeting minutes, trash schedule) and allows staff to view them.
+
+Answer counts & analytics – Update the metrics so that “Questions Answered” reflects the number of questions where the assistant delivered a factual answer. Use seeded data to show charts with categories (trash, taxes, hours, meetings).
+
+Role switcher in staff portal – Add a link or button next to “Switch to Resident View” that also identifies the current role and states the environment (Demo).
+
+Marketing tone – In the staff portal and landing page, emphasize how CivicMind streamlines constituent services, reduces staff workload, and builds trust through transparency. Add a small testimonial or quote from a hypothetical user (e.g., “CivicMind cut our call volume by 30%.”).
+
+E. Final Acceptance Criteria
+
+The next build is done when:
+
+The root page shows a dual‑panel Resident/Staff selector, with the four CivicMind pillars clearly listed.
+
+Residents can ask all five sample questions and receive accurate, citation‑backed answers drawn from the West Newbury data, without generic deflections.
+
+Each answer shows citation numbers linked to real sources, and the “Speak to a person” option only appears when appropriate.
+
+The header in both resident and staff views includes a role switcher (visible in DEMO_MODE) and a Demo badge.
+
+The transparency snapshot is concise and understandable for residents; the AI operations report is available to staff with deeper analytics.
+
+The staff portal loads seeded tickets, documents and analytics; answer counts update as questions are answered.
+
+UI matches West Newbury’s branding, has responsive layout, and uses accessible colors and fonts.
+
+Keep TypeScript types consistent, update database seeds, and test all flows end‑to‑end. This iteration should deliver a polished, data‑rich demo that impresses West Newbury’s stakeholders and showcases CivicMind’s capabilities.
+
+This iteration should guide Replit to a polished, data‑rich demo that aligns with product requirements and delights both the Select Board and prospective clients.
