@@ -8,6 +8,7 @@ import { ocrRateLimiter, getRateLimiterStats } from "./rate-limiter";
 import { detectPii, redactPii } from "./utils/pii-detector";
 import { rateLimiter } from "./utils/rate-limiter";
 import { guardrails } from "./guardrails";
+import { detectServiceRequest, createTicketData, generateTicketResponse } from "./service-routing";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { createRequire } from "module";
@@ -132,9 +133,45 @@ export async function registerRoutes(app: Express) {
       // Use rewritten content if available, otherwise use original
       const finalContent = guardrailCheck.rewrittenContent || aiResponse.content;
 
+      // Check if this requires human assistance (service request)
+      const departments = await storage.getAllDepartments();
+      const serviceDetection = detectServiceRequest(message, departments);
+      
+      let ticketId: string | undefined;
+      let finalResponseContent = finalContent;
+      
+      if (serviceDetection.needsHumanHelp) {
+        // Create a ticket for staff follow-up
+        const ticketData = createTicketData(
+          message,
+          conversation.id,
+          serviceDetection,
+          previousMessages
+        );
+        
+        const ticket = await storage.createTicket(ticketData);
+        ticketId = ticket.id;
+        
+        // Append ticket notification to AI response
+        const ticketNotification = generateTicketResponse(ticket);
+        finalResponseContent = `${finalContent}\n\n---\n\n${ticketNotification}`;
+        
+        // Log ticket creation
+        await storage.createAnalyticsEvent({
+          eventType: "ticket_created",
+          category: serviceDetection.category,
+          wasSuccessful: true,
+          metadata: { 
+            sessionId,
+            ticketId: ticket.id,
+            department: serviceDetection.department
+          },
+        });
+      }
+
       // Update the placeholder message with final content
       const assistantMessage = await storage.updateMessage(placeholderMessage.id, {
-        content: finalContent,
+        content: finalResponseContent,
         citations: aiResponse.citations,
       });
 
@@ -144,12 +181,14 @@ export async function registerRoutes(app: Express) {
         category: aiResponse.category,
         wasSuccessful: aiResponse.wasSuccessful,
         responseTime,
-        metadata: { sessionId },
+        metadata: { sessionId, ticketCreated: !!ticketId },
       });
 
       res.json({
         message: assistantMessage,
         citations: aiResponse.citations,
+        ticketCreated: !!ticketId,
+        ticketId,
       });
     } catch (error) {
       console.error("Chat error:", error);

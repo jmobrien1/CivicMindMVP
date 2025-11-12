@@ -1,0 +1,56 @@
+Your goal is to build an impressive, working demo of CivicMind – Town of West Newbury edition. Start from the existing CivicMind repo (Express/React/TypeScript/PostgreSQL) and implement the following enhancements so that the West Newbury select board will immediately understand the value of this platform and award the contract. This prompt gives you all the requirements, data and design guidelines; you should not ask the user for clarification.
+1. Apply West Newbury branding
+	•	Use the Town of West Newbury style guide (from the provided wn.rtf) to reskin the application:
+	◦	Primary dark green #004422 with light green #E6F0E9 and accent gold #D4AF37 for buttons, card highlights and AI chat bubbles.
+	◦	Clean, legible sans‑serif typography (e.g., Inter, Roboto or Public Sans). Body text uses text-gray-800 (#212529); muted text/borders use text-gray-500 / border-gray-300.
+	◦	The chat widget and admin portal should show the Town seal prominently in the header and footers. Use high‑quality photos reflecting West Newbury’s rural New England charm (rolling hills, historic architecture, Merrimack River) when you need background images.
+	◦	Buttons: primary buttons are solid dark green with white text; secondary buttons are white with dark green border and text; cards use white backgrounds with subtle border and rounded corners; citizen chat bubbles are light gray, AI chat bubbles are very light green (see RTF style guide).
+2. Populate the knowledge base with real West Newbury data
+Use the data below (derived directly from West Newbury’s official website) to seed the application’s documents table and to answer user questions. The assistant must cite sources when replying.
+2.1 Trash and Recycling schedule
+	1	Holiday schedule (2025) – The board of health states that curbside collection does not occur on these holidays. When a collection falls on or after a holiday, it is delayed one daywnewbury.org:
+	2	Holiday
+	3	Date
+	4	New Year’s Day
+	5	Wednesday January 1st
+	6	Memorial Day
+	7	Monday May 26th
+	8	Independence Day
+	9	Friday July 4th
+	10	Labor Day
+	11	Monday September 1st
+	12	Thanksgiving Day
+	13	Thursday November 27th
+	14	Christmas Day
+	15	Thursday December 25th
+	16	  Explain in responses that if a resident’s pickup is scheduled on or after one of these holidays, collection is delayed by one daywnewbury.org.
+	17	General guidance – Use the existing curbside PDF (2025 annual trash collection) to return pickup days (e.g., Tuesday for Route A, etc.). If you cannot infer exact routes programmatically, design the code to allow staff to upload the PDF and automatically extract the schedule into the knowledge base using the existing document ingestion pipeline.
+2.2 Tax collection procedures
+Insert the town’s tax collection information from the published policywnewbury.org into the knowledge base so the assistant can answer questions about property tax deadlines and penalties:
+	•	Real estate and personal property taxes are billed quarterly. Due dates are August 1st, November 1st, February 1st and May 1stwnewbury.org. Late payments accrue 14 % per annum interestwnewbury.org. After May 1st any unpaid balance incurs a $20 demand fee and additional fees if forwarded to the Deputy Collectorwnewbury.org. Postmarks are not accepted.
+	•	Boat excise is billed annually; due 60 days after issue (usually March or April)wnewbury.org; late payments accrue 12 % per diemwnewbury.org.
+	•	Motor vehicle excise bills are issued annually per registration; payment is due 30 days after issue (usually March)wnewbury.org. Late payments accrue 12 % per diem and can result in license and registration holdswnewbury.org.
+	•	Water utility bills are semi‑annual; due 30 days after issuewnewbury.org; late payments receive a demand plus $20 fee and may ultimately lead to shut‑offwnewbury.org.
+2.3 Town hall and finance department contact
+Add contact and hours-of-operation information so the assistant can answer “When is town hall open?”:
+	•	Finance Department / Town Hall – Located at 381 Main Street, West Newbury, MA 01985. Hours are Monday – Thursday 8 AM – 4:30 PM and Friday 8 AM – 12 PMwnewbury.org. Phone: (978) 363‑1100 x 1113wnewbury.org. Use this as the default when the user asks about “town hall” hours.
+3. Implement high‑impact features
+Deliver a polished, fully‑working demo that addresses West Newbury’s real pain points and showcases CivicMind’s differentiators. Implement at least the following:
+	1	Improved Citizen Chat Assistant
+	◦	Expand the chat assistant to answer all FAQs from the user stories (trash & recycling, tax deadlines, permit requirements, school info, emergency contacts, town meeting dates, etc.). Use the seeded data and enable follow‑up questions with context. When the assistant references town policies or schedules, include a citation hyperlink pointing back to the source document (the PDF or text) using the existing citation capability.
+	◦	Add an address lookup input for trash pickup; allow residents to enter their street and return the correct pickup day once the PDF has been ingested. If the address is unknown, provide general guidance and tell the user how to contact the DPW.
+	2	Document Insight Assistant
+	◦	Implement an admin‑facing module allowing staff to upload West Newbury documents (budgets, bylaws, meeting minutes). Use the existing summarization pipeline to generate an executive summary plus extracted key decisions and financial data. Expose a citizen‑facing “Document Insight” tab where users can request summaries and ask follow‑up questions about those documents with citations to page numbers.
+	3	Meeting & Calendar integration
+	◦	Create a scheduled job or API call that fetches upcoming meetings and agendas from the town’s “Minutes & Agendas” pages (e.g., Select Board, Finance Committee, Planning Board) and stores the next three meeting dates and locations in the database. Display these in the citizen chat when users ask “When is the next Select Board meeting?” or “What’s on the Planning Board agenda?”. You can parse HTML or use manual seeding for the demo.
+	4	Service request routing
+	◦	Implement the FR‑1.4 routing flow: detect when a query requires human assistance (e.g., complaints, complex permit questions) and create a ticket in the tickets table. Notify the user of the expected response time and show the assigned department. This can be a simple rule‑based approach for the demo (keywords like “complaint”, “report”, “issue” trigger a ticket).
+	5	Transparency dashboard
+	◦	Build a public transparency page that surfaces metrics (total queries, average response time, accuracy score, number of blocked/rewritten responses) and shows anonymized examples of flagged responses. This page should update live from the analyticsEvents, auditLogs and flaggedResponses tables. Include simple charts (e.g., using Chart.js) to visualize adoption and compliance metrics.
+	6	Admin portal improvements
+	◦	Ensure admins can view and edit policy guardrail configurations (blocked topics, bias thresholds) from the UI. Provide toggles to enable/disable certain West Newbury‑specific policies (e.g., restrict responses containing personal medical information). Use the existing policyConfigs table and update endpoints if necessary.
+	◦	Add a “Knowledge Base Manager” page where staff can review all ingested documents, see their summaries, and re‑trigger summarization if updated documents are uploaded.
+4. Finishing touches
+	•	Testing & polish – Deliver a demo that loads quickly, works responsively on mobile and desktop, and handles edge cases gracefully. Ensure all links open in new tabs and that there are no broken routes. Hide any unimplemented modules and seed the database with the supplied West Newbury data so that the demo is functional without requiring an admin to do data entry.
+	•	Do not remove the existing Policy Guardrails Engine or moderation. Instead, use it to demonstrate how responses containing PII are blocked or rewritten, and show an example of the audit log in the transparency dashboard.
+You have full access to edit the codebase (backend and frontend), run migrations, and seed the database. Use TypeScript best practices, keep the database schema consistent, and ensure that every new feature is secure, performant and aligned with the civic trust mission.

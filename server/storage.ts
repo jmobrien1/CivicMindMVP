@@ -83,6 +83,7 @@ export interface IStorage {
 
   // Department routing operations
   getDepartmentRouting(): Promise<DepartmentRouting[]>;
+  getAllDepartments(): Promise<DepartmentRouting[]>;
   getDepartmentByCategory(category: string): Promise<DepartmentRouting | undefined>;
 
   // Audit log operations
@@ -402,6 +403,13 @@ export class DatabaseStorage implements IStorage {
 
   // Department routing operations
   async getDepartmentRouting(): Promise<DepartmentRouting[]> {
+    return await db
+      .select()
+      .from(departmentRouting)
+      .where(eq(departmentRouting.isActive, true));
+  }
+
+  async getAllDepartments(): Promise<DepartmentRouting[]> {
     return await db
       .select()
       .from(departmentRouting)
