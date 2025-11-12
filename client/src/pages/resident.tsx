@@ -3,15 +3,23 @@ import { useDemo } from "@/contexts/DemoContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Building2, Send, HelpCircle, Loader2, ArrowLeft } from "lucide-react";
+import { Building2, Send, HelpCircle, Loader2, ArrowLeft, FileText } from "lucide-react";
 import { useLocation } from "wouter";
 import { nanoid } from "nanoid";
+
+interface Citation {
+  documentId: string;
+  documentTitle: string;
+  excerpt: string;
+  sourceUrl?: string;
+}
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  citations?: Citation[];
 }
 
 const SAMPLE_QUESTIONS = [
@@ -79,6 +87,7 @@ export default function ResidentPage() {
         role: "assistant",
         content: data.message,
         timestamp: new Date(),
+        citations: data.citations || [],
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -174,7 +183,50 @@ export default function ResidentPage() {
                             : "bg-muted text-foreground"
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        <div className="text-sm whitespace-pre-wrap">
+                          {message.content}
+                          {message.role === "assistant" && message.citations && message.citations.length > 0 && (
+                            <>
+                              {message.citations.map((_citation, idx) => (
+                                <sup key={idx} className="ml-0.5">
+                                  <a
+                                    href={`#citation-${message.id}-${idx}`}
+                                    className="text-[10px] text-primary hover:underline font-medium"
+                                    data-testid={`inline-citation-${idx}`}
+                                  >
+                                    [{idx + 1}]
+                                  </a>
+                                </sup>
+                              ))}
+                            </>
+                          )}
+                        </div>
+
+                        {message.role === "assistant" && message.citations && message.citations.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-border/50">
+                            <div className="flex items-start gap-1.5">
+                              <FileText className="h-3 w-3 mt-0.5 text-muted-foreground flex-shrink-0" />
+                              <div className="text-xs text-muted-foreground space-y-1.5 flex-1">
+                                <div className="font-medium">Sources:</div>
+                                {message.citations.map((citation, idx) => (
+                                  <div key={idx} id={`citation-${message.id}-${idx}`} className="flex items-start gap-1.5">
+                                    <span className="font-mono text-[10px] text-primary flex-shrink-0 font-medium">[{idx + 1}]</span>
+                                    <a
+                                      href={citation.sourceUrl || `https://wnewbury.org`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="underline hover:text-foreground break-words leading-relaxed"
+                                      data-testid={`citation-${idx}`}
+                                    >
+                                      {citation.documentTitle}
+                                    </a>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         <p
                           className={`text-xs mt-2 ${
                             message.role === "user" ? "text-white/70" : "text-muted-foreground"

@@ -184,19 +184,39 @@ export function ChatWidget({ isOpenExternal, onOpenChange, initialMessage }: Cha
                     }`}
                     data-testid={`message-${message.role}`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                    <div className="text-sm whitespace-pre-wrap">
+                      {message.content}
+                      {message.role === "assistant" && message.citations && message.citations.length > 0 && (
+                        <>
+                          {message.citations.map((citation, idx) => (
+                            <sup key={idx} className="ml-0.5">
+                              <a
+                                href={`#citation-${message.id}-${idx}`}
+                                className="text-[10px] text-primary hover:underline font-medium"
+                                data-testid={`inline-citation-${idx}`}
+                              >
+                                [{idx + 1}]
+                              </a>
+                            </sup>
+                          ))}
+                        </>
+                      )}
+                    </div>
 
                     {message.role === "assistant" && message.citations && message.citations.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-border/50">
-                        <div className="flex items-start gap-1">
-                          <FileText className="h-3 w-3 mt-0.5 text-muted-foreground" />
-                          <div className="text-xs text-muted-foreground">
-                            <span className="font-medium">Sources:</span>
+                        <div className="flex items-start gap-1.5">
+                          <FileText className="h-3 w-3 mt-0.5 text-muted-foreground flex-shrink-0" />
+                          <div className="text-xs text-muted-foreground space-y-1.5 flex-1">
+                            <div className="font-medium">Sources:</div>
                             {message.citations.map((citation, idx) => (
-                              <div key={idx} className="mt-1">
+                              <div key={idx} id={`citation-${message.id}-${idx}`} className="flex items-start gap-1.5">
+                                <span className="font-mono text-[10px] text-primary flex-shrink-0 font-medium">[{idx + 1}]</span>
                                 <a
-                                  href="#"
-                                  className="underline hover:text-foreground"
+                                  href={(citation as any).sourceUrl || `https://wnewbury.org`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="underline hover:text-foreground break-words leading-relaxed"
                                   data-testid={`citation-${idx}`}
                                 >
                                   {citation.documentTitle}

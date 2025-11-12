@@ -26,6 +26,7 @@ export const westNewburyKnowledge: Omit<InsertStructuredKnowledge, "id" | "creat
         address: "381 Main Street, West Newbury, MA 01985",
       },
       source: "wnewbury.org - Board of Health",
+      sourceUrl: "https://wnewbury.org/board-of-health",
     },
   },
   {
@@ -46,6 +47,7 @@ export const westNewburyKnowledge: Omit<InsertStructuredKnowledge, "id" | "creat
         },
       },
       source: "wnewbury.org - Town Office",
+      sourceUrl: "https://wnewbury.org/town-office",
     },
   },
   {
@@ -69,6 +71,7 @@ export const westNewburyKnowledge: Omit<InsertStructuredKnowledge, "id" | "creat
         hours: "Mon-Thu 8 AM-4:30 PM, Fri 8 AM-Noon",
       },
       source: "wnewbury.org - Finance Department",
+      sourceUrl: "https://wnewbury.org/finance",
     },
   },
   {
@@ -87,6 +90,7 @@ export const westNewburyKnowledge: Omit<InsertStructuredKnowledge, "id" | "creat
         notes: "Subject to holiday variations",
       },
       source: "wnewbury.org - Select Board",
+      sourceUrl: "https://wnewbury.org/select-board",
     },
   },
   {
@@ -107,6 +111,7 @@ export const westNewburyKnowledge: Omit<InsertStructuredKnowledge, "id" | "creat
         ],
       },
       source: "wnewbury.org - Board of Health",
+      sourceUrl: "https://wnewbury.org/board-of-health",
     },
   },
   {
@@ -181,13 +186,15 @@ export const westNewburyKnowledge: Omit<InsertStructuredKnowledge, "id" | "creat
     priority: 9,
     isActive: true,
     content: {
-      answer: "West Newbury Police Department is located at Public Safety Complex, 401 Main Street. Non-emergency: (978) 363-1212. The department was accredited in October 2024.",
+      answer: "West Newbury Police Department is located at Public Safety Complex, 401 Main Street. For emergencies, call 911. For non-emergency matters, call (978) 363-1212. The department was accredited in October 2024.",
       details: {
         address: "Public Safety Complex, 401 Main Street",
+        emergency: "911",
         nonEmergency: "(978) 363-1212",
         accreditation: "Accredited October 2024",
       },
       source: "wnewbury.org - Police Department",
+      sourceUrl: "https://wnewbury.org/public-safety",
     },
   },
   {
@@ -198,13 +205,15 @@ export const westNewburyKnowledge: Omit<InsertStructuredKnowledge, "id" | "creat
     priority: 9,
     isActive: true,
     content: {
-      answer: "West Newbury Fire Department is located at 403 Main Street. Emergency: (978) 363-1111. Fire prevention: (978) 363-1112.",
+      answer: "West Newbury Fire Department is located at 403 Main Street. For fire emergencies, call 911. For non-emergency matters and fire prevention, call (978) 363-1112.",
       details: {
         address: "403 Main Street",
-        emergency: "(978) 363-1111",
+        emergency: "911",
+        nonEmergency: "(978) 363-1112",
         prevention: "(978) 363-1112",
       },
       source: "wnewbury.org - Fire Department",
+      sourceUrl: "https://wnewbury.org/fire-department",
     },
   },
   {

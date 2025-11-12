@@ -1,0 +1,133 @@
+As the AI pair‑programmer for the CivicMind – West Newbury demo, you are building a public‑facing assistant (React + Node/Express + TypeScript + Postgres) that must impress both residents and decision‑makers. After thorough QA, UX, and CX testing of the current demo, we discovered several critical issues: incorrect answers on trash schedules and meeting times, missing office hours, over‑eager ticket creation for simple queries, lack of citations, and no way to demo the staff portal without credentials. The landing page still lacks the promised dual‑role choice. Sales, marketing and product leaders also want a clearer value proposition and more trust‑building transparency. Address all of these in your next build.
+
+Critical fixes uncovered during QA
+
+Incorrect or incomplete answers – Sample questions about trash pickup returned generic “no meetings scheduled” responses. Office hours were omitted entirely. The Select Board meeting query gave no schedule at all. Board of Health contact information missed the crucial ext. 1118 and ext. 1119. Fire Department guidance returned “call 911” but not the direct non‑emergency numbers. These errors erode user trust and must be fixed.
+
+No citations shown – Answers should cite official sources (e.g., meeting schedules, trash holiday calendars, tax deadlines) so residents feel confident. Include simple footnote markers ([1], [2], etc.) that link to the relevant document or page.
+
+Over‑zealous ticket creation – The assistant automatically opened a service ticket for routine questions (e.g., phone numbers). Ticket creation should happen only when the AI cannot answer confidently or the user explicitly asks to speak to a person.
+
+Missing office hours – The response about Town Hall hours told users to “check the website” instead of stating the actual hours (Mon–Thu 8 AM–4:30 PM, Fri 8 AM–Noon). Provide concrete information whenever possible.
+
+Single‑role landing page – The current home page has only a “Get Started” button. It needs a dual‑panel design to let presenters show both Resident and Staff experiences easily.
+
+Transparency page not split by audience – There’s only one generic “AI Transparency Report,” and no admin‑level AI operations report. Add a simple Resident Snapshot and a deeper Staff AI report.
+
+Unreachable staff portal – The “Staff Login” button leads to a login endpoint with no demo credentials. In Demo Mode, auto‑login the staff view with a mock demo_staff account.
+
+Updated requirements
+1. Dual‑role landing page & Demo Mode
+
+Replace the single “Get Started” button with two role cards:
+
+Resident Experience – description: “Ask about services, schedules and news.” Button: Start Resident Demo → /resident.
+
+Staff Experience – description: “Review tickets, documents and analytics.” Button: Start Staff Demo → /staff (auto‑login demo_staff if DEMO_MODE is true). Display a small badge: “Demo login (production uses SSO).”
+
+Add a role switcher at the top of the app while in Demo Mode to toggle between resident and staff views without re‑authenticating.
+
+Provide a “reset demo” action in staff view to reseed conversations, tickets and analytics.
+
+2. Resident portal fixes
+
+Accurate answers with citations – Build or update your retrieval layer so the AI consistently returns the following information, referencing the West Newbury data extract and documents:
+
+Trash & recycling: weekly trash; recycling every other week on your trash day; barrels out by 6 AM; one‑day delay after holidays; two 65‑gallon carts per household; six bulk pickups per year; Board of Health contacts (Rachel Navarro ext. 1118, Paul Sevigny ext. 1119, Scott Berkenbush). Include a footnote citation to the curbside collection schedule
+civic-mind-mvp-obrienmike.replit.app
+.
+
+Office hours & location: Town Hall at 381 Main Street; hours Mon–Thu 8:00 AM–4:30 PM, Fri 8:00 AM–Noon; main phone (978) 363‑1100
+civic-mind-mvp-obrienmike.replit.app
+. Provide these directly—do not tell users to “check the website.”
+
+Select Board meetings: every other Thursday at ~5:30 PM in the First Floor Hearing Room, 381 Main Street. Suggest checking the calendar for the exact date, but include the usual cadence
+civic-mind-mvp-obrienmike.replit.app
+.
+
+Property taxes: due Aug 1, Nov 1, Feb 1, May 1; payment methods online, by mail, in person, or drop box; FY25 tax rate $10.80; contact Treasurer/Collector ext. 1177 for details.
+
+Police non‑emergency: (978) 363‑1212; Fire Department non‑emergency (978) 363‑1112; Fire emergencies call 911.
+
+Ticket creation logic – Only trigger ticket creation if:
+
+The AI cannot answer or cannot guarantee accuracy;
+
+The user clicks a “Speak to a person” button at the bottom of the AI’s response; or
+
+The user explicitly types something like “I need help” or “I want to talk to someone.”
+When a ticket is created, show a clear confirmation with the ticket ID. Do not auto‑create tickets for phone number queries.
+
+Need More Help card – Include a “Speak to a person” button in this card that opens an escalation form. The card should also include main contact numbers and hours.
+
+Citations & references – Add footnote markers and a small citations list under each answer. For example: “Trash is collected weekly… [1].” The number [1] should be clickable and link to the official document or page (use the href from our extract or actual URL). Keep footnotes out of the main conversation bubble.
+
+3. Staff portal (Demo Mode)
+
+Auto‑authenticate as demo_staff when DEMO_MODE is on. Show a banner indicating it’s a demo login.
+
+Tickets dashboard – List new, in‑progress and resolved tickets. Display resident question, AI answer, citations used, and status. Allow filtering by topic (trash, taxes, etc.). Provide actions: “Reply via email” (demo only), “Resolve,” “Add note.”
+
+Document & data explorer – Let staff browse uploaded bylaws, stormwater regulations, and minutes. Show summaries and allow them to ask follow‑up questions with citations.
+
+AI operations report – Include summary cards (total queries, % answered automatically, escalations, guardrail interventions), charts of top topics, lists of flagged responses (anonymized), feedback metrics, and last data update date. Provide a link to preview the Resident Transparency Snapshot so staff can see what residents see.
+
+4. Transparency split
+
+Resident Transparency Snapshot – Replace the single “AI Transparency Report” with a simplified snapshot accessible from /resident via “How this AI works.” This snapshot should:
+
+Describe data sources (town website, official PDFs, schedules); what data is not used (no personal accounts or police records); and how often data is updated.
+
+Display high‑level metrics seeded from the demo (e.g., 13 questions answered, top topics: trash 8%, taxes 23%, etc.).
+
+Include a short section on guardrails & safety (e.g., PII filtering, emergency redirection) and note that all data is anonymized
+civic-mind-mvp-obrienmike.replit.app
+.
+
+Staff AI Operations Report – Accessible only to staff; contains all analytics, guardrail activities, and audit logs as described above.
+
+5. Improved UX and messaging
+
+Use West Newbury’s dark green and warm tones throughout. Display the town seal in headers. Maintain high contrast for accessibility.
+
+Provide clear, friendly microcopy. Replace “I don’t have any upcoming meetings scheduled” with meaningful help or instructions, or with a correct pattern (e.g., “Select Board meetings are typically every other Thursday…”).
+
+Add loading indicators when the assistant is thinking, but ensure the spinner disappears once the response arrives. Auto‑scroll to the latest message after each answer.
+
+When errors occur (e.g., network issues), display a gentle fallback message and invite the user to try again or contact staff.
+
+6. Data seeding and tests
+
+Seed DEMO_MODE with the correct West Newbury facts above (trash schedules, office hours, meetings, contacts, tax info, police/fire contacts, etc.). Include sample conversations representing common resident journeys.
+
+Seed tickets so that there are realistic new and resolved tickets waiting in staff view. Include at least one escalation from the resident view and one created by the staff for demonstration.
+
+Add automated tests (Jest + React Testing Library) that verify:
+
+Sample questions return the correct text and citations.
+
+Ticket creation only occurs under the conditions specified.
+
+The role switcher preserves the resident conversation when toggling.
+
+Staff view shows the seeded tickets and analytics.
+
+7. Marketing & sales narrative
+
+Clarify the value proposition on the landing page: “Empower residents with immediate, accurate answers and free up town staff for high‑value work. Built‑in analytics and guardrails ensure safety and accountability.”
+
+Use headings and bullet lists on the landing page to highlight the four pillars: Resident Engagement, Document Insights, Smart Ticketing, and Transparency.
+
+Include testimonials or quotes (fabricated for demo) such as “Our call volume dropped by 30% in the first month” to help sales teams tell a compelling story.
+
+Add an optional “Book a demo” button for prospective clients (links to an email or scheduling tool; in demo mode this could simply open a contact form).
+
+Implementation notes
+
+Keep to existing architecture: React front‑end, Express + TypeScript back‑end, Postgres/Drizzle. Ensure TypeScript types are updated when you add new DB columns (e.g., ticket status, citation references). Use environment variables for DEMO_MODE and optionally for customizing the town’s details (so this can be reused for other municipalities).
+
+Make sure all new UI components are responsive and accessible (ARIA labels, keyboard navigable).
+
+Do not hard‑code any secret keys or API tokens in the repository. Use .env for environment‑specific settings.
+
+Deliver these changes in your next iteration. The demo should now provide accurate, cited answers, respect when to create tickets, allow smooth resident/staff switching, and present a compelling narrative for both residents and town officials.

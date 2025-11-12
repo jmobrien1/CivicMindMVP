@@ -92,6 +92,16 @@ The design system emphasizes trust, professional restraint, and responsive effic
    - **Seeded Data:** 6 upcoming Select Board and Planning Board meetings (Nov-Dec 2025) with realistic West Newbury dates, Town Hall location (381 Main Street), and detailed agendas
    - **Performance:** Meeting queries bypass AI generation entirely, reducing token usage and response latency while ensuring accurate scheduling information
 
+9. **Citations & Source Transparency (Completed - November 2025):**
+   - **Smart Citation Extraction:** Multi-signal algorithm checks title keywords (2+ matching words) and content tokens (3+ matches) from AI responses for accurate source attribution
+   - **Structured Knowledge Integration:** sourceUrl fields populated for all 12 West Newbury demo entries with wnewbury.org references; fallback to https://wnewbury.org when missing
+   - **Frontend Display:** TypeScript-typed Citation interface with inline [1], [2] markers and dedicated Sources section showing FileText icon and clickable links
+   - **Security & UX:** All citation links open in new tabs (target="_blank", rel="noopener noreferrer") with proper data-testid attributes for E2E validation
+   - **AI Prompt Optimization:** System explicitly instructs GPT-4o to exclude citation text from responses - citations added automatically by backend
+   - **E2E Validation:** Comprehensive tests verify inline markers, Sources list rendering, link attributes, and scroll-to-citation navigation
+   - **Performance:** Citation extraction runs synchronously during chat response generation with negligible latency impact
+   - **Transparency:** Every assistant response shows document sources used, building resident trust in AI-generated municipal information
+
 **Planned Features**
 
 SMS/text message channel integration (Twilio), municipal ticketing system integration (Tyler Technologies, CivicPlus).

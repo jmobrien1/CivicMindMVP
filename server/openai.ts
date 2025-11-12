@@ -47,7 +47,7 @@ export async function generateChatResponse(
 
     const systemPrompt = `You are a helpful municipal AI assistant for the Town of West Newbury. Your role is to:
 1. Answer the CURRENT question using ONLY the provided documents
-2. Be accurate and cite your sources
+2. Be accurate - sources will be cited automatically by the system
 3. Provide actionable next steps when you lack complete information
 4. Include friendly follow-up prompts to encourage exploration
 5. Never make up information
@@ -62,6 +62,7 @@ Response Guidelines:
 - IMPORTANT: Answer the user's CURRENT question, not previous topics from the conversation history
 - Only use information from the provided documents that relates to the current question
 - Each question should get a fresh, relevant answer based on the documents
+- DO NOT include citations, sources, or "(Source: ...)" text in your response - the system adds citations automatically
 - When you lack specific information (like an address or specific case), provide helpful next steps:
   * Suggest visiting the town website (wnewbury.org)
   * Recommend calling the appropriate department with the phone number
@@ -70,8 +71,7 @@ Response Guidelines:
   * "Would you like to see upcoming Select Board meetings?"
   * "Would you like information about other town services?"
   * "Can I help you with anything else about West Newbury?"
-- Format responses clearly with line breaks for readability
-- Always cite sources with "wnewbury.org" when referencing official town documents${languageInstruction}`;
+- Format responses clearly with line breaks for readability${languageInstruction}`;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -84,13 +84,38 @@ Response Guidelines:
 
     const content = response.choices[0]?.message?.content || "I apologize, but I couldn't generate a response. Please try again or contact staff directly.";
 
-    // Extract citations from the response (simple heuristic)
+    // Extract citations from the response
+    // Include documents if their title OR significant keywords appear in the response
     const citations = context.documents
-      .filter(doc => content.toLowerCase().includes(doc.title.toLowerCase()))
+      .filter(doc => {
+        const lowerContent = content.toLowerCase();
+        const lowerTitle = doc.title.toLowerCase();
+        
+        // Check if title appears in response
+        if (lowerContent.includes(lowerTitle)) {
+          return true;
+        }
+        
+        // For structured knowledge, check if key terms appear
+        // E.g., "Trash & Recycling" contains "trash" and "recycling"
+        const titleWords = lowerTitle.split(/\s+/).filter(w => w.length > 3);
+        const matchingWords = titleWords.filter(word => lowerContent.includes(word));
+        
+        // If 2+ significant words from title appear in content, include it
+        if (matchingWords.length >= 2) {
+          return true;
+        }
+        
+        // Also include if document content appears in response
+        const contentWords = doc.content.toLowerCase().split(/\s+/).slice(0, 20);
+        const contentMatches = contentWords.filter(word => word.length > 4 && lowerContent.includes(word));
+        return contentMatches.length >= 3;
+      })
       .map(doc => ({
         documentId: doc.id,
         documentTitle: doc.title,
-        excerpt: doc.content.substring(0, 100) + "..."
+        excerpt: doc.content.substring(0, 100) + "...",
+        sourceUrl: doc.fileUrl || undefined
       }));
 
     // Simple category detection

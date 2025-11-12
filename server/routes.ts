@@ -122,11 +122,33 @@ export async function registerRoutes(app: Express) {
       // Get context: recent messages and relevant documents
       const previousMessages = await storage.getMessages(conversation.id);
       const documents = await storage.searchDocuments(message);
+      
+      // Also search structured knowledge
+      const keywords = message.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2);
+      const structuredKnowledge = await storage.searchStructuredKnowledge(keywords);
+      
+      // Convert structured knowledge to document format for AI context
+      // We pass these alongside documents to generateChatResponse
+      const knowledgeDocs = structuredKnowledge.map(entry => {
+        const contentObj = typeof entry.content === 'object' && entry.content !== null ? entry.content as any : {};
+        const sourceUrl = contentObj.sourceUrl || contentObj.source || undefined;
+        
+        return {
+          id: entry.id,
+          title: entry.topic,
+          content: contentObj.answer || JSON.stringify(entry.content),
+          category: entry.category || "Knowledge",
+          fileUrl: sourceUrl,
+        };
+      });
+      
+      // Combine documents and structured knowledge (type cast for AI context)
+      const allDocs = [...documents, ...knowledgeDocs as any[]];
 
       // Generate AI response
       const startTime = Date.now();
       const aiResponse = await generateChatResponse(message, {
-        documents,
+        documents: allDocs,
         previousMessages: previousMessages.slice(-5), // Last 5 messages for context
       });
       const responseTime = Date.now() - startTime;
@@ -228,7 +250,7 @@ export async function registerRoutes(app: Express) {
         responseTime,
         metadata: { sessionId, ticketCreated: !!ticketId },
       });
-
+      
       res.json({
         message: assistantMessage.content,
         citations: aiResponse.citations,
