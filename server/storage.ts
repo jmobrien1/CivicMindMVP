@@ -12,6 +12,7 @@ import {
   auditLogs,
   policyConfigs,
   flaggedResponses,
+  structuredKnowledge,
   type User,
   type UpsertUser,
   type Document,
@@ -36,6 +37,8 @@ import {
   type InsertPolicyConfig,
   type FlaggedResponse,
   type InsertFlaggedResponse,
+  type StructuredKnowledge,
+  type InsertStructuredKnowledge,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, sql } from "drizzle-orm";
@@ -120,6 +123,14 @@ export interface IStorage {
   getActiveConfigs(): Promise<PolicyConfig[]>;
   upsertPolicyConfig(config: InsertPolicyConfig): Promise<PolicyConfig>;
   deactivatePolicyConfig(id: string): Promise<void>;
+
+  // Structured knowledge operations (for demo mode)
+  createStructuredKnowledge(knowledge: InsertStructuredKnowledge): Promise<StructuredKnowledge>;
+  getAllStructuredKnowledge(): Promise<StructuredKnowledge[]>;
+  searchStructuredKnowledge(keywords: string[]): Promise<StructuredKnowledge[]>;
+  
+  // Demo operations
+  clearDemoData(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -651,6 +662,47 @@ export class DatabaseStorage implements IStorage {
       .update(policyConfigs)
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(policyConfigs.id, id));
+  }
+
+  // Structured knowledge operations (for demo mode)
+  async createStructuredKnowledge(knowledgeData: InsertStructuredKnowledge): Promise<StructuredKnowledge> {
+    const [knowledge] = await db
+      .insert(structuredKnowledge)
+      .values(knowledgeData)
+      .returning();
+    return knowledge;
+  }
+
+  async getAllStructuredKnowledge(): Promise<StructuredKnowledge[]> {
+    return await db
+      .select()
+      .from(structuredKnowledge)
+      .where(eq(structuredKnowledge.isActive, true))
+      .orderBy(desc(structuredKnowledge.priority));
+  }
+
+  async searchStructuredKnowledge(keywords: string[]): Promise<StructuredKnowledge[]> {
+    const allKnowledge = await this.getAllStructuredKnowledge();
+    
+    // Simple keyword matching - returns knowledge entries that match any keyword
+    return allKnowledge.filter((knowledge) => {
+      const knowledgeKeywords = knowledge.keywords || [];
+      return keywords.some((keyword) =>
+        knowledgeKeywords.some((kw) =>
+          kw.toLowerCase().includes(keyword.toLowerCase())
+        )
+      );
+    });
+  }
+
+  // Demo operations
+  async clearDemoData(): Promise<void> {
+    // Clear demo-related data but preserve users and structured knowledge
+    // Note: This is a simplified implementation - adjust based on your needs
+    await db.delete(messages);
+    await db.delete(conversations);
+    await db.delete(tickets);
+    await db.delete(analyticsEvents);
   }
 }
 

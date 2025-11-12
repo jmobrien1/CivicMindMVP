@@ -1,0 +1,231 @@
+You are the AI pair‑programmer for the CivicMind – Town of West Newbury demo. The code base uses React (frontend), Node/Express with TypeScript (backend), Postgres/Drizzle (database), and a retrieval‑augmented LLM layer. Your task is to deliver a polished demo that wins over the West Newbury Select Board. Draw on the existing CivicMind PRD, user stories and as‑built documentation for guidance, but listen closely to the guidance from our product, UX, CX, SaaS, sales, marketing, and innovation experts below.
+
+Key Goals & Principles
+
+Create a seamless dual‑persona demo – The demo must let a presenter easily show both the Resident experience and the Town Staff experience without friction.
+
+Ground the assistant in real West Newbury data – Use the “West Newbury Town Information Extract” (included below) to seed your knowledge base and sample content. Answers about trash schedules, office hours, contact numbers, meetings, and recent announcements must reflect these facts.
+
+Split transparency for residents vs. staff – Residents see a friendly “Transparency Snapshot,” while staff see an “AI Operations Report” with detailed analytics and guardrail activity.
+
+Rework the landing page to fit the new demo flow – The current homepage reads like a generic marketing page and doesn’t reflect multi‑role functionality. You must redesign it so it invites users to choose a role, while highlighting the breadth of features available.
+
+Highlight the value proposition – Our experts want a clear narrative: the system lightens the burden on town staff, empowers residents with 24/7 answers, and provides oversight with built‑in safeguards and analytics. The design should radiate competence and trustworthiness.
+
+A. Landing page overhaul (Marketing, UX, BD)
+
+Replace the existing hero section with a two‑panel selector that invites the user to choose their experience:
+
+Panel 1: “I’m a Resident”
+
+Brief copy: “Ask questions about West Newbury services, find meeting schedules, and see what’s happening around town.”
+
+Button: Start Resident Demo → routes to /resident.
+
+Panel 2: “I’m Town Staff”
+
+Brief copy: “Review tickets, see how the AI answered residents, and manage analytics & guardrails.”
+
+Button: Start Staff Demo → routes to /staff, auto‑authenticates a demo_staff user when DEMO_MODE is on. Display a badge indicating it’s a demo.
+
+Below the role selector, include a concise value proposition for both audiences. Instead of the old list of generic features (“Natural Language,” “Public Analytics,” etc.), group the features into the four CivicMind pillars:
+
+Citizen Engagement Assistant – Real‑time answers, escalation to humans, 24/7 availability (with bullet list of example queries: trash & recycling schedules, tax deadlines, office hours, etc.).
+
+Document & Data Insights – Summarize bylaws, permit requirements and meeting minutes, with citations to official documents. Expose a “Document Explorer” in the staff view.
+
+Smart Ticketing & Workflow – Auto‑create tickets when questions need human help, route to departments (Board of Health, Town Clerk, DPW, etc.), and track resolution status.
+
+Transparency & Guardrails – Public snapshot for residents and full AI operations dashboard for staff; built‑in safeguards like PII filtering, emergency redirection, and anti‑abuse policies.
+
+Add a short footer with West Newbury branding, the town seal, and contact details (381 Main Street, (978) 363‑1100). Use the color palette from the West Newbury style guide (green and gold) to unify the experience.
+
+B. Demo Mode & Role Toggle (Product, Engineering)
+
+Add a global DEMO_MODE flag consumed by both client and server. When DEMO_MODE is true, show the role selector on the landing page and auto‑authenticate the staff demo.
+
+Introduce a role switcher in the header for /resident and /staff. The switcher should display the current role (“Resident View” or “Staff View”) and allow instant toggling without page reload.
+
+Use useContext or a similar state management solution to preserve the last resident conversation when toggling roles during the demo.
+
+C. Resident Experience (UX, CX)
+
+Route: /resident
+
+Chat UX:
+
+Press Enter to send; Shift+Enter for a newline.
+
+The send button always triggers sending.
+
+Auto‑scroll to the latest message.
+
+Sample question buttons (right side or under hero) prefill and send these real questions:
+• “When is trash and recycling pickup for my house, and are there any holiday delays?”
+• “When are property taxes due and how can I pay?”
+• “What are town office hours and where is Town Hall?”
+• “How do I contact the Board of Health about trash and recycling?”
+• “When does the Select Board usually meet?”
+These must return accurate answers using the data below.
+
+Use real answers: Build retrieval or a structured data layer so the AI always mentions:
+• Trash pick‑up is weekly; recycling is every other week on trash day; carts must be out by 6 AM; collections slip by one day after holidays; each household has two 65‑gallon carts; contact Board of Health at (978) 363‑1100 ext. 1118 for questions.
+• Town hall is at 381 Main Street; office hours are Mon–Thu 8:00–4:30 and Fri 8:00–Noon; main phone is (978) 363‑1100.
+• Property taxes are due quarterly (Aug 1, Nov 1, Feb 1, May 1) unless dates fall on a weekend/holiday; payments are handled by the Treasurer/Collector; FY25 tax rate is $10.80.
+• Select Board usually meets every other Thursday around 5:30 PM in the First Floor Hearing Room at Town Office Building.
+• Staff and department contact numbers from the extract (Finance, Clerk, DPW, Water, Police, Fire, Public Safety Dispatch, SAGE Center, etc.).
+
+Escalate to a person: After certain answers, show “Still need help? → Speak to a person.” The form creates a ticket with the resident’s name, contact (optional), and question/answer summary. Confirm to the user that the request has been forwarded to staff; in demo mode, no real email is sent.
+
+Resident Transparency Snapshot: Add a “How this AI works” link. It must show plain‑language content: what data sources are used (town website, bylaws, schedule documents); what data is not used; simple metrics (questions answered, top topics, % escalated) seeded from the demo; and safety notes (PII filtering, no medical/financial advice, emergencies call 911). Do not reveal internal logs or prompt details to residents.
+
+D. Staff Experience (Admins & Agency Workers)
+
+Route: /staff (auto‑login as demo_staff in demo mode)
+
+Show a Staff Demo Overview on first visit:
+
+Review incoming tickets; 2) Inspect how the AI answered; 3) View internal AI report; 4) Explore the document/data repository.
+
+Tickets / Work Queue:
+
+List tickets with filters: New, In Progress, Resolved.
+
+Each ticket shows: resident question, AI answer snippet, topic, timestamp, and status.
+
+Detail view: full conversation, sources used (e.g., “Trash schedule 2025”), actions (“Mark as resolved”, “Add note”, “Mock email reply”).
+
+New tickets created in the resident view should appear in real time (use polling or websockets).
+
+Log actions to the analytics events table.
+
+Document & Data Explorer: Provide a simple interface for staff to upload, view and summarize town documents (e.g., bylaws, zoning maps, stormwater regulations, meeting minutes). Use open‑source file parsing to extract text, store in Postgres with vector embeddings, and display a summary with citations. This satisfies Document Insight user stories.
+
+AI Operations Report:
+
+Summarize total queries, % answered without escalation, number of escalations, and number of guardrail interventions (blocked or modified answers).
+
+Chart top topics (trash, taxes, office hours, permits, zoning, DPW, SAGE programs).
+
+Show examples of guardrail triggers (e.g., refusing to give medical advice).
+
+Display feedback metrics (thumbs up/down counts, common reasons for negative feedback).
+
+Provide a high‑level system overview: LLM provider, retrieval sources, last data refresh.
+
+Include a minimal audit log: prompt/template changes, data uploads, configuration updates.
+
+Reset Demo: Provide a button to reset the demo environment. It should clear seeded chats, tickets, and analytics, then reseed with the baseline data described below.
+
+E. Data Seeding for Demo Mode
+
+When DEMO_MODE is true, on startup seed the database with structured content drawn from the West Newbury Town Information Extract:
+
+Structured knowledge records for quick retrieval (trash schedule rules, office hours, phone numbers, department contacts, recurring meeting patterns, news items like the Fall Special Town Meeting on Nov 3 2025, Middle Street Bridge rebuild, Hazardous Waste Day on Aug 2 2025, SAGE events, etc.).
+
+Sample conversations and tickets, with topics covering trash & recycling, office hours, DPW issues, library events, SAGE programs, and bylaw questions. Some should be resolved, others left open.
+
+Analytics & guardrail events reflecting a realistic mix of queries: trending topics, some refusals (e.g., requests for medical advice), and some negative feedback.
+
+F. Acceptance Criteria
+
+The updated system must satisfy all of the following in DEMO_MODE:
+
+Landing page clearly separates Resident vs Staff experiences and uses copy aligned with the four CivicMind pillars. The design uses West Newbury colors and includes the town seal and contact info. There is a role switcher when inside the app.
+
+Residents can ask real questions and receive accurate answers grounded in the data extract. They can view the Resident Transparency Snapshot and create tickets that appear instantly in the staff portal.
+
+Staff can see and resolve tickets, explore documents, and view the AI operations report. They can also toggle to the resident view without re‑authenticating and vice versa.
+
+Residents and staff see appropriate transparency levels: plain snapshot vs detailed operations report.
+
+The demo is self‑contained: DEMO_MODE seeds data automatically, and staff can reset the demo from the UI.
+
+West Newbury Town Information Extract (ground truth)
+
+Use the following facts verbatim when answering questions or populating seeded data. Do not invent alternative values.
+
+Meeting & Hours
+
+Select Board meetings occur every other Thursday (subject to holiday variations) and have recently been scheduled at 5:30 PM in the First Floor Hearing Room, 381 Main Street.
+
+Town Office hours: Mon–Thu 8 AM–4:30 PM; Fri 8 AM–Noon. Address: 381 Main Street, West Newbury, MA 01985. Phone: (978) 363‑1100.
+
+Trash & Recycling (2025)
+
+Trash is collected once per week; barrels must be placed curbside by 6:00 AM.
+
+Recycling is collected every other week on the trash day; collection is delayed by one day after holidays.
+
+Each household has two 65‑gallon carts (trash and recycling). Bulk items are collected six times per year.
+
+Residents with questions should contact the Board of Health office at (978) 363‑1100 ext. 1118.
+
+Key Department Contacts
+
+Board of Health: 381 Main Street;
+Rachel Navarro (Admin Assistant) (978) 363‑1100 ext. 1118;
+Paul Sevigny (Health Agent) (978) 363‑1100 ext. 1119 (cell 978‑833‑7458);
+Scott Berkenbush (Recycling Coordinator).
+
+Finance Dept: Hours Mon–Thu 8 AM–4:30 PM; Fri 8 AM–Noon; Phone (978) 363‑1100 ext. 1113.
+
+Town Clerk: Hours Mon–Thu 8 AM–4:30 PM; Fri 8 AM–Noon; Phone (978) 363‑1100 ext. 1110. Handles permits: telephone pole, burial, gasoline storage, dog licenses, raffle/bazaar, business certificates.
+
+DPW: Phone (978) 363‑1100 ext. 1135; Highway Superintendent Richard “Butch” Hills ext. 1120; Facilities Manager Brian Richard ext. 1129; after‑hours emergencies (978) 363‑1213.
+
+Water Dept: Hours Mon–Thu 8:30 AM–2:30 PM; Phone (978) 363‑1100 ext. 1127; Jodi Bertrand ext. 127; Mark Marlowe ext. 128.
+
+Police: Non‑emergency (978) 363‑1212; address Public Safety Complex, 401 Main Street. Accredited (Oct 2024).
+
+Fire: Emergency (978) 363‑1111; prevention (978) 363‑1112; address 403 Main Street.
+
+Public Safety Dispatch: Non‑emergency (978) 363‑1212; alternate (978) 363‑1213.
+
+Council on Aging – SAGE Center: Phone (978) 363‑1104; address 381 Main Street. Offers Mahjong Wednesdays (1–4 PM), Lunch & Learn series on senior safety & scams, and other programs.
+
+G.A.R. Memorial Library: Address 490 Main Street; phone (978) 363‑1105. Hosts book sales (e.g., May 7–10 2025), virtual programs, kite‑building workshops, and more.
+
+Taxes & Permitting
+
+Property taxes are due Aug 1, Nov 1, Feb 1, May 1; if a due date falls on a weekend/holiday, payment is due the next business day. FY25 tax rate: $10.80. Payments handled by Treasurer/Collector (Finance Department).
+
+The Town Clerk issues various permits: telephone pole, burial, gasoline storage, dog licenses, raffle & bazaar, business certificates.
+
+Recurring Meetings & Programs
+
+Planning Board meetings are held via Zoom on the first and third Tuesday of each month. They review development plans, special permits, subdivisions, etc.
+
+SAGE programs: Mahjong Wednesdays 1–4 PM; Lunch & Learn speaker series; other senior events.
+
+Recent Announcements (2025)
+
+Fall Special Town Meeting: Nov 3 2025 at 7 PM, Town Annex (379 Main Street).
+
+Annual Town Meeting: April 28 2025 at 6 PM.
+
+MBTA zoning location working group presentations (multi‑family zoning compliance by Dec 2025).
+
+Annual Hazardous Waste Collection Day: Aug 2 2025 8 AM–12 PM at Newburyport DPW.
+
+Agricultural Committee formed following the Right to Farm by‑law.
+
+Middle Street Bridge rebuild began early 2025; funded by federal ARPA & state grants (~$3M per community).
+
+Town offices closed Tuesday, Nov 11 2025.
+
+Library book sale May 7–10 2025 at Town Hall (491 Main Street); library also runs virtual programs.
+
+Vaccination clinics and blood drives occur periodically at town facilities.
+
+Policies & Bylaws
+
+The town maintains comprehensive bylaws (originally 1930, amended through 2009) covering conduct, alcoholic beverages, committees, construction/excavation, animal/dog regulations, finance, gasoline stations, historic districts, etc.
+
+Zoning & planning: zoning bylaw, groundwater protection overlay district, large‑scale ground‑mounted solar map. 2025 proposals include MBTA multi‑family overlay, battery energy storage bylaw, accessory dwelling unit updates, and floodplain overlay updates.
+
+Stormwater management: Planning Board regulations (June 6 2023) and Board of Health permits.
+
+Board of Health regulations: drain health, percolation & septic, refuse hauler licensing, storm drain illicit connection prohibition, mercury thermostat disposal, well regulations.
+
+Implement all of the above changes and seed data according to this extract. Once done, the demo should feel like a production‑ready West Newbury assistant: it’s visually aligned with the town, deeply knowledgeable about real services, offers a smooth multi‑role journey, and clearly communicates both the value of AI and the guardrails in place.

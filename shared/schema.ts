@@ -392,3 +392,29 @@ export const insertFlaggedResponseSchema = createInsertSchema(flaggedResponses).
 
 export type FlaggedResponse = typeof flaggedResponses.$inferSelect;
 export type InsertFlaggedResponse = z.infer<typeof insertFlaggedResponseSchema>;
+
+// Structured knowledge for demo mode - deterministic Q&A
+export const structuredKnowledge = pgTable("structured_knowledge", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  slug: varchar("slug", { length: 100 }).notNull().unique(), // Unique identifier like "trash-schedule", "office-hours"
+  topic: varchar("topic", { length: 200 }).notNull(), // Display name like "Trash & Recycling Schedule"
+  keywords: text("keywords").array().notNull(), // Keywords for matching queries
+  content: jsonb("content").notNull(), // Structured data with fields like "answer", "details", "contacts"
+  category: varchar("category", { length: 100 }), // "Services", "Contact", "Schedule", etc.
+  priority: integer("priority").default(0), // Higher priority = checked first
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("structured_knowledge_slug_idx").on(table.slug),
+  index("structured_knowledge_category_idx").on(table.category),
+]);
+
+export const insertStructuredKnowledgeSchema = createInsertSchema(structuredKnowledge).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type StructuredKnowledge = typeof structuredKnowledge.$inferSelect;
+export type InsertStructuredKnowledge = z.infer<typeof insertStructuredKnowledgeSchema>;

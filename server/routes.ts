@@ -337,8 +337,14 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  app.get("/api/tickets", isAuthenticated, async (req, res) => {
+  // Get tickets - public in demo mode for staff demo access
+  app.get("/api/tickets", async (req, res) => {
     try {
+      // Allow access in demo mode or if authenticated
+      if (process.env.DEMO_MODE !== "true" && !(req as any).isAuthenticated()) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
       const tickets = await storage.getTickets();
       res.json(tickets);
     } catch (error) {
@@ -1157,6 +1163,49 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error("Get stats error:", error);
       res.status(500).json({ error: "Failed to fetch statistics" });
+    }
+  });
+
+  // ===== DEMO MODE ENDPOINTS =====
+  
+  // Get demo mode status
+  app.get("/api/demo/status", async (req, res) => {
+    res.json({
+      enabled: process.env.DEMO_MODE === "true",
+    });
+  });
+
+  // Reset demo data (requires authentication in production, but allows in demo mode)
+  app.post("/api/demo/reset", async (req, res) => {
+    try {
+      if (process.env.DEMO_MODE !== "true") {
+        return res.status(403).json({ error: "Demo mode is not enabled" });
+      }
+
+      const { resetDemoData } = await import("./demo-seed.js");
+      await resetDemoData();
+
+      res.json({ success: true, message: "Demo data has been reset" });
+    } catch (error) {
+      console.error("Demo reset error:", error);
+      res.status(500).json({ error: "Failed to reset demo data" });
+    }
+  });
+
+  // Get structured knowledge (for demo mode accurate answers)
+  app.post("/api/knowledge/search", async (req, res) => {
+    try {
+      const { keywords } = req.body;
+
+      if (!keywords || !Array.isArray(keywords)) {
+        return res.status(400).json({ error: "Keywords array is required" });
+      }
+
+      const results = await storage.searchStructuredKnowledge(keywords);
+      res.json(results);
+    } catch (error) {
+      console.error("Knowledge search error:", error);
+      res.status(500).json({ error: "Failed to search knowledge base" });
     }
   });
 }
