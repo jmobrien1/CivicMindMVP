@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle, X, Send, ThumbsUp, ThumbsDown, User, FileText } from "lucide-react";
@@ -31,6 +31,7 @@ export function ChatWidget({ isOpenExternal, onOpenChange, initialMessage }: Cha
   const [input, setInput] = useState("");
   const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Use external state if provided, otherwise use internal state
   const isOpen = isOpenExternal !== undefined ? isOpenExternal : isOpenInternal;
@@ -88,16 +89,22 @@ export function ChatWidget({ isOpenExternal, onOpenChange, initialMessage }: Cha
     },
   });
 
+  // Auto-scroll to latest message
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, sendMessage.isPending]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (input.trim() && !sendMessage.isPending) {
       sendMessage.mutate(input.trim());
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
     }
   };
 
@@ -246,24 +253,28 @@ export function ChatWidget({ isOpenExternal, onOpenChange, initialMessage }: Cha
               </div>
             </div>
           )}
+          
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 
       <div className="p-4 border-t">
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <Input
+        <form onSubmit={handleSubmit} className="flex gap-2 items-end">
+          <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask a question..."
+            onKeyDown={handleKeyDown}
+            placeholder="Ask a question... (Enter to send, Shift+Enter for new line)"
             disabled={sendMessage.isPending}
-            className="flex-1"
-            data-testid="input-chat-message"
+            className="flex-1 min-h-[40px] max-h-[120px] resize-none"
+            rows={1}
+            data-testid="input-chat"
           />
           <Button
             type="submit"
             size="icon"
             disabled={!input.trim() || sendMessage.isPending}
-            data-testid="button-send-message"
+            data-testid="button-chat-send"
           >
             <Send className="h-4 w-4" />
           </Button>

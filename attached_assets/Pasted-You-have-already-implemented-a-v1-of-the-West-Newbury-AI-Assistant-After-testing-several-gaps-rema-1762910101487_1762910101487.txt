@@ -1,0 +1,53 @@
+You have already implemented a v1 of the West Newbury AI Assistant. After testing, several gaps remain. Please apply the following refinements and enhancements on top of your existing codebase:
+
+1. Fix message input UX
+
+Make pressing Enter in the chat input send the question (with Shift‑Enter for a new line). The send arrow should always dispatch the current message. Currently, clicking the arrow sometimes does nothing.
+
+Auto‑scroll the chat viewport to the latest message after each user or AI message so that responses aren’t hidden off‑screen.
+
+2. Improve knowledge accuracy and coverage
+
+Trash & recycling: Use the holiday delay logic from West Newbury’s 2025 curbside collection notice to answer questions like “When is trash pickup delayed for Thanksgiving?” Instead of responding with unrelated meeting information, the assistant should say that trash collection is delayed one day if the normal pickup falls on or after Thanksgiving, citing the source
+wnewbury.org
+.
+
+Property tax deadlines: When asked “When are property taxes due?”, the assistant should reply that real estate and personal property tax bills are due Aug 1, Nov 1, Feb 1 and May 1 each year and include a citation to the town’s tax collection procedures
+wnewbury.org
+. Late payments accrue 14 % annual interest and may result in a $20 demand fee
+wnewbury.org
+.
+
+Town hall hours: Answer “What are the town office hours?” with the finance department’s hours (Mon–Thu 8 AM–4:30 PM, Fri 8 AM–12 PM)
+wnewbury.org
+.
+
+Add handling for other common questions from the user stories (meeting schedules, permits, school registration, etc.) even if you need to seed placeholder data for the demo.
+
+3. Enrich responses with next steps
+
+When the assistant lacks data (e.g., unknown address for trash pickup), suggest an actionable next step such as visiting a specific page or calling a department. Avoid generic “I don’t know” replies.
+
+Include friendly follow‑up prompts (e.g., “Would you like to see upcoming Select Board meetings?”) to encourage exploration.
+
+4. Enhance the Transparency Report
+
+Show a satisfaction rate once you collect at least one “thumbs up”/“thumbs down” rating; compute it as (positive ratings ÷ total ratings). Use dummy data if needed for the demo.
+
+Add a Flagged Responses section listing examples of blocked or rewritten answers (anonymized) with a short explanation of why they were flagged. Use your guardrails logs to populate this.
+
+5. Polish the UI to match the West Newbury style guide
+
+Incorporate the town seal into the header of the site and at the top of the chat widget.
+
+Adjust the color palette to use the dark green (#004422) for primary elements and the light green (#E6F0E9) as a background, with gold (#D4AF37) as a subtle accent. The current design is overly pastel.
+
+Harmonize spacing and typography so the landing page feels coherent and professional. The “Common Questions” section can be styled as clickable cards that trigger the chat with those queries.
+
+6. Expose the admin/document features for demo
+
+Link the Document Insight module from the landing page so testers can upload a West Newbury document (e.g., budget PDF) and see a generated summary with citations. Pre‑load at least one sample document.
+
+Include a basic ticket view in the admin area showing any escalated queries, so stakeholders can see the human‑in‑the‑loop workflow.
+
+Focus on delivering a polished, reliable experience rather than adding entirely new features. After implementing these adjustments, redeploy the app so that typical West Newbury inquiries are answered accurately with citations and the UI reflects the town’s visual identity.
