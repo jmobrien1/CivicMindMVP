@@ -50,7 +50,9 @@ app.use((req, res, next) => {
   await registerRoutes(app);
 
   // Seed demo data if in DEMO_MODE
-  if (process.env.DEMO_MODE === "true") {
+  // Default to true in development unless explicitly set to "false"
+  const isDemoMode = process.env.NODE_ENV === "development" && process.env.DEMO_MODE !== "false";
+  if (isDemoMode) {
     try {
       const { seedDemoData } = await import("./demo-seed.js");
       await seedDemoData();

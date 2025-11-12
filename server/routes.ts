@@ -341,7 +341,8 @@ export async function registerRoutes(app: Express) {
   app.get("/api/tickets", async (req, res) => {
     try {
       // Allow access in demo mode or if authenticated
-      if (process.env.DEMO_MODE !== "true" && !(req as any).isAuthenticated()) {
+      const isDemoMode = process.env.NODE_ENV === "development" && process.env.DEMO_MODE !== "false";
+      if (!isDemoMode && !(req as any).isAuthenticated()) {
         return res.status(401).json({ error: "Authentication required" });
       }
       
@@ -1170,15 +1171,18 @@ export async function registerRoutes(app: Express) {
   
   // Get demo mode status
   app.get("/api/demo/status", async (req, res) => {
+    // Default to true in development unless explicitly set to "false"
+    const isDemoMode = process.env.NODE_ENV === "development" && process.env.DEMO_MODE !== "false";
     res.json({
-      enabled: process.env.DEMO_MODE === "true",
+      enabled: isDemoMode,
     });
   });
 
   // Reset demo data (requires authentication in production, but allows in demo mode)
   app.post("/api/demo/reset", async (req, res) => {
     try {
-      if (process.env.DEMO_MODE !== "true") {
+      const isDemoMode = process.env.NODE_ENV === "development" && process.env.DEMO_MODE !== "false";
+      if (!isDemoMode) {
         return res.status(403).json({ error: "Demo mode is not enabled" });
       }
 
