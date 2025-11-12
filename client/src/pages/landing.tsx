@@ -115,7 +115,7 @@ export default function Landing() {
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             {/* Pillar 1: Citizen Engagement */}
-            <Card>
+            <Card data-testid="card-pillar-engagement">
               <CardHeader>
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-[#004422]/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -138,7 +138,7 @@ export default function Landing() {
             </Card>
 
             {/* Pillar 2: Document & Data Insights */}
-            <Card>
+            <Card data-testid="card-pillar-documents">
               <CardHeader>
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-[#004422]/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -160,7 +160,7 @@ export default function Landing() {
             </Card>
 
             {/* Pillar 3: Smart Ticketing */}
-            <Card>
+            <Card data-testid="card-pillar-ticketing">
               <CardHeader>
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-[#D4AF37]/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -182,7 +182,7 @@ export default function Landing() {
             </Card>
 
             {/* Pillar 4: Transparency & Guardrails */}
-            <Card>
+            <Card data-testid="card-pillar-transparency">
               <CardHeader>
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-[#004422]/10 rounded-lg flex items-center justify-center flex-shrink-0">

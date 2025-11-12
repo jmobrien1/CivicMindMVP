@@ -114,7 +114,7 @@ export async function registerRoutes(app: Express) {
         });
         
         return res.json({
-          message: assistantMessage,
+          message: assistantMessage.content,
           citations: [],
         });
       }
@@ -230,7 +230,7 @@ export async function registerRoutes(app: Express) {
       });
 
       res.json({
-        message: assistantMessage,
+        message: assistantMessage.content,
         citations: aiResponse.citations,
         ticketCreated: !!ticketId,
         ticketId,
