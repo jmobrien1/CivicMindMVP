@@ -13,13 +13,7 @@ const MEETING_KEYWORDS = [
   "select board",
   "planning board",
   "town meeting",
-  "next meeting",
-  "when is",
-  "upcoming meeting",
-  "schedule",
   "agenda",
-  "when does",
-  "when will",
 ];
 
 const BOARD_NAMES = {
@@ -29,9 +23,35 @@ const BOARD_NAMES = {
   "planningboard": "Planning Board",
 };
 
+const SERVICE_KEYWORDS = [
+  "trash",
+  "recycling",
+  "garbage",
+  "waste",
+  "pickup",
+  "collection",
+  "tax",
+  "payment",
+  "bill",
+  "office hours",
+  "town hall hours",
+  "permit",
+  "license",
+];
+
 export function detectMeetingQuery(message: string): MeetingQuery {
   const lowerMessage = message.toLowerCase();
   
+  // Skip if this looks like a service request (trash, taxes, etc.)
+  const hasServiceKeyword = SERVICE_KEYWORDS.some(keyword => 
+    lowerMessage.includes(keyword)
+  );
+  
+  if (hasServiceKeyword) {
+    return { isMeetingQuery: false };
+  }
+  
+  // Check for explicit meeting keywords OR board names
   const hasMeetingKeyword = MEETING_KEYWORDS.some(keyword => 
     lowerMessage.includes(keyword)
   );
