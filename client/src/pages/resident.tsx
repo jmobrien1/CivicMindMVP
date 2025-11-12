@@ -218,7 +218,7 @@ export default function ResidentPage() {
           <div className="flex items-center gap-2">
             {isDemoMode && (
               <Button 
-                variant="ghost" 
+                variant="outline" 
                 size="sm"
                 onClick={() => {
                   setRole("staff");
