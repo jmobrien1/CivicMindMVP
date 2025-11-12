@@ -8,6 +8,7 @@ import {
   tickets,
   analyticsEvents,
   departmentRouting,
+  meetings,
   auditLogs,
   policyConfigs,
   flaggedResponses,
@@ -27,6 +28,8 @@ import {
   type InsertAnalyticsEvent,
   type DepartmentRouting,
   type InsertDepartmentRouting,
+  type Meeting,
+  type InsertMeeting,
   type AuditLog,
   type InsertAuditLog,
   type PolicyConfig,
@@ -85,6 +88,15 @@ export interface IStorage {
   getDepartmentRouting(): Promise<DepartmentRouting[]>;
   getAllDepartments(): Promise<DepartmentRouting[]>;
   getDepartmentByCategory(category: string): Promise<DepartmentRouting | undefined>;
+
+  // Meeting operations
+  createMeeting(meeting: InsertMeeting): Promise<Meeting>;
+  getMeeting(id: string): Promise<Meeting | undefined>;
+  updateMeeting(id: string, meeting: Partial<Meeting>): Promise<Meeting>;
+  deleteMeeting(id: string): Promise<void>;
+  listMeetings(): Promise<Meeting[]>;
+  getUpcomingMeetings(options?: { boardName?: string; limit?: number; includePast?: boolean }): Promise<Meeting[]>;
+  getNextMeetingForBoard(boardName: string): Promise<Meeting | undefined>;
 
   // Audit log operations
   createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
@@ -425,6 +437,84 @@ export class DatabaseStorage implements IStorage {
     return departments.find(dept => 
       dept.categories?.some(cat => cat.toLowerCase() === category.toLowerCase())
     );
+  }
+
+  // Meeting operations
+  async createMeeting(meeting: InsertMeeting): Promise<Meeting> {
+    const [createdMeeting] = await db.insert(meetings).values(meeting).returning();
+    return createdMeeting;
+  }
+
+  async getMeeting(id: string): Promise<Meeting | undefined> {
+    const [meeting] = await db.select().from(meetings).where(eq(meetings.id, id));
+    return meeting;
+  }
+
+  async updateMeeting(id: string, meeting: Partial<Meeting>): Promise<Meeting> {
+    const [updatedMeeting] = await db
+      .update(meetings)
+      .set({ ...meeting, updatedAt: new Date() })
+      .where(eq(meetings.id, id))
+      .returning();
+    return updatedMeeting;
+  }
+
+  async deleteMeeting(id: string): Promise<void> {
+    await db.delete(meetings).where(eq(meetings.id, id));
+  }
+
+  async listMeetings(): Promise<Meeting[]> {
+    return await db
+      .select()
+      .from(meetings)
+      .where(eq(meetings.isPublic, true))
+      .orderBy(meetings.meetingDate);
+  }
+
+  async getUpcomingMeetings(options?: { 
+    boardName?: string; 
+    limit?: number; 
+    includePast?: boolean 
+  }): Promise<Meeting[]> {
+    const now = new Date();
+    const conditions = [eq(meetings.isPublic, true)];
+    
+    if (!options?.includePast) {
+      conditions.push(gte(meetings.meetingDate, now));
+    }
+    
+    if (options?.boardName) {
+      conditions.push(eq(meetings.boardName, options.boardName));
+    }
+
+    let query = db
+      .select()
+      .from(meetings)
+      .where(and(...conditions))
+      .orderBy(meetings.meetingDate);
+
+    if (options?.limit) {
+      query = query.limit(options.limit) as any;
+    }
+
+    return await query;
+  }
+
+  async getNextMeetingForBoard(boardName: string): Promise<Meeting | undefined> {
+    const now = new Date();
+    const [meeting] = await db
+      .select()
+      .from(meetings)
+      .where(
+        and(
+          eq(meetings.boardName, boardName),
+          eq(meetings.isPublic, true),
+          gte(meetings.meetingDate, now)
+        )
+      )
+      .orderBy(meetings.meetingDate)
+      .limit(1);
+    return meeting;
   }
 
   // Audit log operations

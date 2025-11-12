@@ -251,6 +251,32 @@ export const insertDepartmentRoutingSchema = createInsertSchema(departmentRoutin
 export type DepartmentRouting = typeof departmentRouting.$inferSelect;
 export type InsertDepartmentRouting = z.infer<typeof insertDepartmentRoutingSchema>;
 
+// Town meetings (Select Board, Planning Board, etc.)
+export const meetings = pgTable("meetings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title", { length: 255 }).notNull(),
+  boardName: varchar("board_name", { length: 100 }).notNull(), // "Select Board", "Planning Board", etc.
+  meetingDate: timestamp("meeting_date").notNull(),
+  location: varchar("location", { length: 255 }).notNull(),
+  agenda: text("agenda"),
+  agendaUrl: varchar("agenda_url", { length: 500 }),
+  isPublic: boolean("is_public").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("meetings_board_date_idx").on(table.boardName, table.meetingDate),
+  index("meetings_date_idx").on(table.meetingDate),
+]);
+
+export const insertMeetingSchema = createInsertSchema(meetings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type Meeting = typeof meetings.$inferSelect;
+export type InsertMeeting = z.infer<typeof insertMeetingSchema>;
+
 // Audit logs for compliance and transparency
 export const auditLogs = pgTable("audit_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

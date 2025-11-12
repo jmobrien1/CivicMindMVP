@@ -9,6 +9,7 @@ import { detectPii, redactPii } from "./utils/pii-detector";
 import { rateLimiter } from "./utils/rate-limiter";
 import { guardrails } from "./guardrails";
 import { detectServiceRequest, createTicketData, generateTicketResponse } from "./service-routing";
+import { detectMeetingQuery, formatMeetingResponse } from "./meeting-intent";
 import { z } from "zod";
 import { nanoid } from "nanoid";
 import { createRequire } from "module";
@@ -73,6 +74,50 @@ export async function registerRoutes(app: Express) {
         role: "user",
         content: message,
       });
+
+      // Check for meeting queries first (before AI)
+      const meetingQuery = detectMeetingQuery(message);
+      if (meetingQuery.isMeetingQuery) {
+        let meetings;
+        
+        if (meetingQuery.queryType === "next" && meetingQuery.boardName) {
+          const meeting = await storage.getNextMeetingForBoard(meetingQuery.boardName);
+          meetings = meeting ? [meeting] : null;
+        } else {
+          meetings = await storage.getUpcomingMeetings({
+            boardName: meetingQuery.boardName,
+            limit: meetingQuery.queryType === "upcoming" ? 10 : undefined,
+          });
+        }
+        
+        const meetingResponse = formatMeetingResponse(meetings, meetingQuery.queryType || "all");
+        
+        // Save assistant response
+        const assistantMessage = await storage.createMessage({
+          conversationId: conversation.id,
+          role: "assistant",
+          content: meetingResponse,
+          citations: [],
+        });
+        
+        // Log analytics event
+        await storage.createAnalyticsEvent({
+          eventType: "query",
+          category: "meeting_info",
+          wasSuccessful: true,
+          responseTime: 0,
+          metadata: { 
+            sessionId,
+            boardName: meetingQuery.boardName,
+            queryType: meetingQuery.queryType,
+          },
+        });
+        
+        return res.json({
+          message: assistantMessage,
+          citations: [],
+        });
+      }
 
       // Get context: recent messages and relevant documents
       const previousMessages = await storage.getMessages(conversation.id);
@@ -316,6 +361,50 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error("Update ticket error:", error);
       res.status(500).json({ error: "Failed to update ticket" });
+    }
+  });
+
+  // ===== MEETING ENDPOINTS =====
+  
+  app.get("/api/meetings/upcoming", async (req, res) => {
+    try {
+      const { boardName, limit } = req.query;
+      
+      let parsedLimit: number | undefined;
+      if (limit) {
+        parsedLimit = Math.min(Math.max(parseInt(limit as string, 10) || 10, 1), 50);
+      }
+      
+      const meetings = await storage.getUpcomingMeetings({
+        boardName: boardName as string | undefined,
+        limit: parsedLimit,
+      });
+      
+      res.json(meetings);
+    } catch (error) {
+      console.error("Get upcoming meetings error:", error);
+      res.status(500).json({ error: "Failed to get upcoming meetings" });
+    }
+  });
+
+  app.get("/api/meetings/board/:boardName/next", async (req, res) => {
+    try {
+      const { boardName } = req.params;
+      
+      if (!boardName || boardName.length > 100) {
+        return res.status(400).json({ error: "Invalid board name" });
+      }
+      
+      const meeting = await storage.getNextMeetingForBoard(boardName);
+      
+      if (!meeting) {
+        return res.status(404).json({ error: "No upcoming meeting found for this board" });
+      }
+      
+      res.json(meeting);
+    } catch (error) {
+      console.error("Get next meeting error:", error);
+      res.status(500).json({ error: "Failed to get next meeting" });
     }
   });
 
