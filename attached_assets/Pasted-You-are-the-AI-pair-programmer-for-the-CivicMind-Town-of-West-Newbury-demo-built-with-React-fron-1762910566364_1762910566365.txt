@@ -1,0 +1,345 @@
+You are the AI pair-programmer for the CivicMind – Town of West Newbury demo, built with React (frontend), Node/Express + TypeScript (backend), and Postgres/Drizzle (data). Your job is to create a **seamless multi-role demo** that uses **real West Newbury data** and a **role-aware transparency design** that makes sense for:
+
+1. Residents (public users)
+2. Town staff (agency employees / admins)
+
+Use the existing CivicMind PRD, user stories, and as-built notes as the source of truth for personas, flows, and architecture. Use the **West Newbury Town Information Extract below as canonical ground truth** for content. Maintain West Newbury branding and the safe, trustworthy tone of a municipal service.
+
+----------------------------------------------------------------------
+WEST NEWBURY TOWN INFORMATION – GROUND TRUTH FOR DEMO
+----------------------------------------------------------------------
+
+Treat the following bullets as **fact data** for the demo. Seed them into your database / content layer and build Q&A behavior around them. Do **not** invent different values for these.
+
+1) SELECT BOARD MEETINGS
+- Select Board meetings are held **regularly every other Thursday**, with occasional variations for holidays or scheduling.
+- Recent meetings (2025) have been scheduled at **5:30pm**.
+- Regular meeting location: **First Floor Hearing Room, 381 Main Street, Town Office Building, West Newbury, MA 01985**.
+
+2) TOWN OFFICE HOURS & MAIN CONTACT
+- General town office hours: **Monday–Thursday 8:00am–4:30pm, Friday 8:00am–12:00pm (noon)**.
+- Primary town office address: **381 Main Street, West Newbury, MA 01985**.
+- Main phone: **(978) 363-1100**.
+
+3) TRASH & RECYCLING PICKUP (2025)
+- **Trash collection:** once per week; residents must place barrels **curbside by 6:00am** on collection day.
+- **Recycling collection:** every other week **on your trash day**, with collection **delayed one day after observed holidays**.
+- Collection system: automated curbside collection with **65-gallon carts**. Each household receives **two carts**.
+- **Bulk items** are collected **six times per year**.
+- 2025 **observed holidays** cause schedule adjustments (e.g., trash and recycling pushed back by one day after the holiday).
+- For questions about trash & recycling, residents contact the **Board of Health office** at **(978) 363-1100 ext. 1118**.
+
+4) BOARD OF HEALTH CONTACTS
+- Board of Health address: **381 Main Street, West Newbury, MA 01985**.
+- Staff:
+  - **Rachel Navarro**, Administrative Assistant to Board of Health – **(978) 363-1100 ext. 1118**.
+  - **Paul Sevigny**, Health Agent – **(978) 363-1100 ext. 1119**, cell **(978) 833-7458**.
+  - **Scott Berkenbush**, Recycling Coordinator.
+
+5) KEY DEPARTMENT CONTACTS & HOURS
+Use these for routing, sample tickets, and resident Q&A:
+
+- **Finance Department**
+  - Hours: Mon–Thu 8:00am–4:30pm, Fri 8:00am–Noon.
+  - Phone: **(978) 363-1100 ext. 1113**.
+  - Address: 381 Main Street.
+
+- **Town Clerk**
+  - Hours: Mon–Thu 8:00am–4:30pm, Fri 8:00am–Noon.
+  - Phone: **(978) 363-1100 ext. 1110**.
+  - Licenses/permits include: telephone pole permits, burial permits, storage of gasoline/flammables, dog licenses, raffle & bazaar licenses, business certificates, etc.
+
+- **Town Manager / General Government**
+  - Town Manager: **Angus Jennings**.
+  - Executive Assistant: **Rebecca Ambra**, **(978) 363-1100 ext. 1115**.
+  - Project Manager: **Christine Wallace, P.E.**, **(978) 363-1100 ext. 1130**.
+
+- **Department of Public Works (DPW)**
+  - Phone: **(978) 363-1100 ext. 1135**.
+  - Highway Superintendent: **Richard “Butch” Hills**, ext. 1120.
+  - Facilities Manager: **Brian Richard**, ext. 1129.
+  - After-hours emergencies: **(978) 363-1213**.
+
+- **Water Department**
+  - Hours: Mon–Thu **8:30am–2:30pm**.
+  - Phone: **(978) 363-1100 ext. 1127**.
+  - Administrative Assistant: **Jodi Bertrand**, ext. 127.
+  - Water Superintendent: **Mark Marlowe**, ext. 128.
+
+- **Police Department**
+  - Non-emergency: **(978) 363-1212**.
+  - Address: **Public Safety Complex, 401 Main Street**.
+  - Recently re-accredited (Oct 2024).
+
+- **Fire Department**
+  - Emergency line: **(978) 363-1111**.
+  - Fire prevention: **(978) 363-1112**.
+  - Address: **403 Main Street**.
+
+- **Public Safety Dispatch**
+  - Non-emergency dispatch: **(978) 363-1212**.
+  - Alternate phone: **(978) 363-1213**.
+
+- **Council on Aging – SAGE Center**
+  - Phone: **(978) 363-1104**.
+  - Address: 381 Main Street.
+  - Programs include MAHJONG, Lunch & Learn (senior safety & scams), social/health activities.
+
+- **G.A.R. Memorial Library**
+  - Address: **490 Main Street**.
+  - Phone: **(978) 363-1105**.
+  - Hosts book sales, virtual programs, workshops, etc.
+
+6) REGULAR MEETINGS & PROGRAMS
+Use these as examples in FAQs and seeded conversations:
+
+- **Select Board**: generally every other Thursday, ~5:30pm at the First Floor Hearing Room, 381 Main Street.
+- **Planning Board**: meets remotely via Zoom on the **first and third Tuesday of each month**, reviewing development plans, site plans, special permits, and subdivisions.
+- **COA / SAGE Center**: recurring MAHJONG Wednesdays 1:00–4:00pm; Lunch & Learn speaker series about senior safety and scams.
+- **Library**: Book sale (e.g., May 7–10, 2025 at Town Hall / 491 Main St), plus ongoing virtual programs and special events like Kite Building Workshops.
+
+7) TOWN POLICIES & BYLAWS (FOR ANSWERS/INTENT, NOT FULL TEXT)
+- West Newbury has comprehensive **Town Bylaws** (originally 1930, amended through 2009) covering:
+  - General behavior/conduct, alcoholic beverages, boards & committees, construction/excavation, animal (dog) regulations, finance, gasoline stations, historic districts, etc.
+- **Zoning & Planning**:
+  - Zoning Bylaw & Map, Groundwater Protection Overlay District, large-scale ground-mounted solar installations.
+  - 2025 zoning work includes:
+    - MBTA Communities Multi-Family Overlay District (compliance by Dec 2025).
+    - Battery Energy Storage System bylaw.
+    - Accessory Dwelling Unit bylaw updates (Affordable Homes Act).
+    - Floodplain Overlay District updates (FEMA/NFIP).
+- **Stormwater Management**:
+  - Planning Board stormwater regulations (June 6, 2023) with Tier One and Tier Two permits.
+  - Board of Health stormwater regulations and permits.
+- **Board of Health Regulations**:
+  - Drain/health regs, percolation testing & septic, independent refuse hauler regs, storm drain illicit connection prohibitions, mercury disposal, well regulations.
+
+8) RECENT NEWS & EXAMPLES FOR DEMO Q&A
+Seed some news stories so the assistant can answer “What’s going on in town?” type questions:
+
+- Fall Special Town Meeting – Nov 3, 2025 at 7pm in the Town Annex, 379 Main Street.
+- Annual Town Meeting – April 28, 2025 at 6pm.
+- MBTA Zoning Location Working Group presentations (2025) regarding multi-family zoning.
+- Annual Hazardous Waste Collection Day – Aug 2, 2025, 8am–12pm at Newburyport DPW.
+- Agricultural Committee formation following the Right to Farm by-law (2025 ATM).
+- Middle Street Bridge rebuild – construction began early 2025; project supported by federal ARPA funds and state grants (~$3M per community).
+- Town Offices closed all day Tuesday, November 11, 2025.
+- Vaccination clinics coordinated by Health Department; blood drives at Town Annex; various library and SAGE programs.
+
+Use these as **seeded “news cards” or sample questions** in the demo, not as a live news feed.
+
+----------------------------------------------------------------------
+A. DEMO MODE & ROLE SELECTION
+----------------------------------------------------------------------
+
+1. Add a **DEMO_MODE** env flag used by both frontend and backend.
+
+2. On the landing page, add a “Choose your perspective” section with two big cards:
+
+   - Card 1: **“Experience CivicMind as a Resident”**
+     - Primary button: **Start Resident Demo**
+     - Route to `/resident` (public assistant view). No login required.
+
+   - Card 2: **“Experience CivicMind as Town Staff”**
+     - Primary button: **Start Staff Demo**
+     - In DEMO_MODE, auto-authenticate as a `demo_staff` user and route to `/staff`.
+     - Display a small badge: “Demo login (production uses SSO / secure auth)”.
+
+3. Add a **role switcher** in the header (DEMO_MODE only):
+   - `Resident View | Staff View`.
+   - If in `/resident`, “Staff View” → `/staff` with `demo_staff` auto-login.
+   - If in `/staff`, “Resident View” → `/resident`.
+   - Preserve key state where reasonable (e.g., last resident chat session).
+
+----------------------------------------------------------------------
+B. RESIDENT EXPERIENCE (PUBLIC VIEW)
+----------------------------------------------------------------------
+
+Route: `/resident`
+
+1. **Chat UX**
+   - Press **Enter** → send.
+   - **Shift+Enter** → newline.
+   - Send arrow always dispatches message.
+   - Auto-scroll to latest messages.
+
+2. **Sample Resident Journeys (buttons that auto-ask questions)**
+
+   Implement clickable prompts that:
+   - Fill the input with one of these and send automatically:
+
+   - “When is trash and recycling pickup for my house, and are there any holiday delays?”
+     - Use facts: weekly trash, every-other-week recycling, 6:00am curbside, one-day delay after observed holidays, automated 65-gallon carts, Board of Health contact for questions.
+
+   - “When are property taxes due and how can I pay?”  
+     - Use tax timeline and FY25 tax information from the town (assessment, abatement/exemption deadlines, tax rate $10.80). If you don’t have the full calendar, give a concise description and route to Treasurer/Collector or Finance office for exact bill due dates.
+
+   - “What are town office hours and where is Town Hall?”  
+     - Answer with: 381 Main Street, hours Mon–Thu 8–4:30, Fri 8–Noon, main phone (978) 363-1100.
+
+   - “How do I contact the Board of Health about trash and recycling questions?”  
+     - Answer with Board of Health contacts and emphasize ext. 1118 for trash/recycling.
+
+   - “When does the Select Board usually meet?”  
+     - Answer with “generally every other Thursday at 5:30pm in the First Floor Hearing Room at 381 Main Street,” and note to check the calendar for exact dates.
+
+3. **Use REAL DATA in Answers**
+
+   - Build retrieval / lookups (or simple hard-coded knowledge for the demo) so that:
+     - Trash/recycling answers always mention 6:00am curbside, weekly trash, every-other-week recycling, holiday delay rules, and Board of Health contacts.
+     - Office-hours questions reflect Mon–Thu 8–4:30, Fri 8–Noon, and 381 Main Street.
+     - Department-contact questions give the correct phones and addresses from the extract above.
+     - “What’s happening in town?” style questions surface a few 2025 news items (Fall Special Town Meeting, Middle Street Bridge, Hazardous Waste Day, MBTA zoning work, library book sale, SAGE programs).
+
+4. **Escalation to Human (Ticket Creation)**
+
+   - “Still need help? → Speak to a person” under some answers.
+   - Form: name (prefill “Jane Doe” in DEMO_MODE), email (optional), description (prefill with question + AI answer).
+   - Creates a ticket in `tickets` table (e.g., `source = 'resident_ai_escalation'`).
+   - Confirmation: “We’ve forwarded this to town staff. This is a demo; no real email has been sent.”
+
+5. **Resident Transparency Snapshot**
+
+   Route or modal from `/resident` labeled **“How this AI assistant works”**.
+
+   - Explain in plain English:
+     - Data sources: public town website, official documents, and configured town info (trash schedule, hours, contacts, bylaws, etc.).
+     - What it *does not* access: private tax accounts, police case files, personal medical information, banking, etc.
+   - Show simple metrics (using seeded demo analytics):
+     - Questions answered this week.
+     - Top topics (e.g., trash & recycling, taxes, office hours).
+     - % of questions routed to human staff.
+   - Safeguards section:
+     - The AI may decline medical/financial/legal advice and direct residents to human staff.
+     - No emergency handling; for emergencies call 911 or West Newbury Police/Fire non-emergency numbers.
+
+   - Provide buttons:
+     - “Contact town staff”.
+     - “This is a demo – in production, contact info would link to real forms.”
+
+   - Do NOT show residents: raw logs, prompt text, or detailed guardrail rules.
+
+----------------------------------------------------------------------
+C. STAFF EXPERIENCE (ADMIN / TOWN WORKER VIEW)
+----------------------------------------------------------------------
+
+Route: `/staff` (auto-login `demo_staff` in DEMO_MODE)
+
+1. **Staff Demo Overview**
+
+   - On first load, show a “Staff Demo Overview” panel:
+     - Step 1: Review tickets from residents.
+     - Step 2: Inspect how the AI answered and which town data it used.
+     - Step 3: View the internal **AI Operations Report**.
+
+2. **Tickets / Work Queue**
+
+   - Tickets list with filters: “New (AI escalations)”, “In Progress”, “Resolved”.
+   - Each ticket includes:
+     - Resident question.
+     - AI answer snippet.
+     - Topic classification (trash, taxes, office hours, permits, etc.).
+     - Source (web assistant).
+     - Status.
+
+   - Ticket detail includes:
+     - Full conversation or summary.
+     - Data references (e.g., “Used trash schedule + Board of Health contact info”).
+     - Actions: “Mark as Resolved”, “Add internal note”, “Reply via Email (demo only)”.
+
+   - Ticket created via resident escalation should appear here in real time (poll or WebSocket).
+
+3. **AI OPERATIONS REPORT (Staff-Only Transparency)**
+
+   Route: `/staff/ai-report` or tab.
+
+   Include:
+
+   - Summary cards:
+     - Total queries (last 7 days).
+     - % answered without human staff.
+     - # of escalations.
+     - # of responses modified/blocked by guardrails.
+
+   - Topic breakdown:
+     - Chart of top topics (trash/recycling, taxes, office hours, permits, zoning/bylaws, DPW issues, SAGE/COA questions).
+     - Filter to see example anonymized questions per topic.
+
+   - Guardrails & safety:
+     - Counts of blocked/modified responses.
+     - A few anonymized examples: e.g., refusal to answer legal advice, redirecting emergencies to 911, etc.
+
+   - Feedback:
+     - Thumbs up/down counts; basic reasons (e.g., “information incomplete”, “wrong office”, “great answer”).
+
+   - System details (brief):
+     - LLM provider(s), retrieval strategy (town docs + structured config).
+     - Last update of town data.
+
+   - Audit log:
+     - Key configuration changes (prompt updates, new data loads).
+     - Spikes in query volume.
+
+   Staff should also be able to click a link to preview what residents see in the Transparency Snapshot.
+
+----------------------------------------------------------------------
+D. DATA SEEDING FOR DEMO_MODE
+----------------------------------------------------------------------
+
+Create a seeding script or startup hook that, when DEMO_MODE is true:
+
+1. Seeds **structured data** for:
+   - Trash & recycling rules (including holidays, carts, bulk pickup).
+   - Department contacts and hours from the extract.
+   - Meeting patterns for Select Board and Planning Board.
+   - Key 2025 news items (Fall Special Town Meeting, Middle Street Bridge, Hazardous Waste Day, etc.).
+   - Basic tax info (FY25 tax rate, where to go for tax bills, Treasurer/Collector office).
+
+2. Seeds **sample conversations**:
+   - Resident asking about:
+     - Trash/recycling during a holiday week.
+     - Office hours / address of Town Hall.
+     - Who to call about a septic issue (Board of Health).
+     - Non-emergency police contact.
+     - Library programs or SAGE Center events.
+   - Each conversation saved with topic tags and whether it was resolved by AI or escalated.
+
+3. Seeds **tickets**:
+   - 2–3 existing resolved tickets (e.g., trash cart replacement, water bill question, library hours).
+   - At least 1 “New” ticket to show incoming work.
+
+4. Seeds **analytics/guardrail events**:
+   - Provide realistic charts for the Resident Snapshot and AI Operations Report.
+
+5. Adds a **“Reset Demo”** button in the staff view:
+   - Clears demo data and re-runs seeding.
+   - Shows toast: “Demo reset to fresh state.”
+
+----------------------------------------------------------------------
+E. UX & BRANDING POLISH
+----------------------------------------------------------------------
+
+1. Apply West Newbury branding:
+   - Calm green palette, clean typography, town seal/logo in header.
+   - Resident view feels like a public-facing town page; staff view feels like an internal app.
+
+2. Show current role clearly:
+   - Badge in header: “Resident View” vs “Staff View (demo_staff)”.
+
+3. Ensure all new views are responsive and look good on a laptop for live presentation.
+
+----------------------------------------------------------------------
+F. ACCEPTANCE CRITERIA
+----------------------------------------------------------------------
+
+The work is complete when:
+
+- From the landing page in DEMO_MODE, a presenter can:
+  - Click **Start Resident Demo**, ask a sample question about trash, taxes, or hours, see a grounded answer using the real West Newbury data above, escalate to a person, and view the Resident Transparency Snapshot.
+  - Click **Start Staff Demo**, land in `/staff` without extra login, see the newly created ticket, resolve it, and then open the AI Operations Report with realistic analytics.
+
+- Multi-role switching works cleanly; no dead ends or authentication friction during the demo.
+
+- Resident transparency is simple and reassuring; staff transparency is detailed and operational.
+
+- Answers about **when/where/how** (office hours, addresses, phone numbers, trash/recycling rules, meeting patterns, key departments) match the data in the West Newbury Town Information Extract, and the demo feels like it’s truly built for West Newbury, not a generic sample town.

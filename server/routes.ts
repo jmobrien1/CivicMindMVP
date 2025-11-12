@@ -932,6 +932,24 @@ export async function registerRoutes(app: Express) {
         ? queryEvents.reduce((sum, e) => sum + (e.responseTime || 0), 0) / queryEvents.length
         : 0;
 
+      // Get flagged responses statistics (aggregate only for security)
+      const allFlags = await storage.getAllFlags();
+      const recentFlags = allFlags.filter(f => f.createdAt && f.createdAt >= thirtyDaysAgo);
+      
+      const flagStats = {
+        totalFlagged: recentFlags.length,
+        bySeverity: {
+          low: recentFlags.filter(f => f.severity === "low").length,
+          medium: recentFlags.filter(f => f.severity === "medium").length,
+          high: recentFlags.filter(f => f.severity === "high").length,
+        },
+        byAction: {
+          blocked: recentFlags.filter(f => f.status === "blocked").length,
+          rewritten: recentFlags.filter(f => f.status === "pending" || f.status === "rewritten").length,
+          reviewed: recentFlags.filter(f => f.status === "approved").length,
+        },
+      };
+
       res.json({
         totalQueries: queryEvents.length,
         totalQuestionsAnswered: successfulQueries.length,
@@ -939,6 +957,7 @@ export async function registerRoutes(app: Express) {
         satisfactionRate: feedbackEvents.length > 0 ? positiveFeedback / feedbackEvents.length : 0,
         topTopics,
         dailyQueries,
+        guardrailsStats: flagStats,
         lastUpdated: new Date().toLocaleString(),
       });
     } catch (error) {

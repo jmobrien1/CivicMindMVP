@@ -11,6 +11,11 @@ interface TransparencyData {
   satisfactionRate: number;
   topTopics: Array<{ topic: string; count: number; percentage: number }>;
   dailyQueries: Array<{ date: string; count: number }>;
+  guardrailsStats: {
+    totalFlagged: number;
+    bySeverity: { low: number; medium: number; high: number };
+    byAction: { blocked: number; rewritten: number; reviewed: number };
+  };
   lastUpdated: string;
 }
 
@@ -180,6 +185,62 @@ export default function Transparency() {
             </CardContent>
           </Card>
         </div>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>AI Guardrails & Safety</CardTitle>
+            <CardDescription>Automatic content moderation protecting against bias and inappropriate responses</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {data?.guardrailsStats && data.guardrailsStats.totalFlagged > 0 ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-4 bg-muted rounded-lg">
+                    <div className="text-2xl font-bold">{data.guardrailsStats.totalFlagged}</div>
+                    <div className="text-xs text-muted-foreground mt-1">Total Flagged</div>
+                  </div>
+                  <div className="text-center p-4 bg-muted rounded-lg">
+                    <div className="text-2xl font-bold text-destructive">{data.guardrailsStats.byAction.blocked}</div>
+                    <div className="text-xs text-muted-foreground mt-1">Blocked</div>
+                  </div>
+                  <div className="text-center p-4 bg-muted rounded-lg">
+                    <div className="text-2xl font-bold text-primary">{data.guardrailsStats.byAction.rewritten}</div>
+                    <div className="text-xs text-muted-foreground mt-1">Rewritten</div>
+                  </div>
+                  <div className="text-center p-4 bg-muted rounded-lg">
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">{data.guardrailsStats.byAction.reviewed}</div>
+                    <div className="text-xs text-muted-foreground mt-1">Reviewed & Approved</div>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium mb-3">Flags by Severity</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Low</span>
+                      <span className="text-sm font-medium">{data.guardrailsStats.bySeverity.low}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Medium</span>
+                      <span className="text-sm font-medium">{data.guardrailsStats.bySeverity.medium}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">High</span>
+                      <span className="text-sm font-medium">{data.guardrailsStats.bySeverity.high}</span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Our AI guardrails automatically detect and mitigate potential bias in responses. High-severity flags are blocked, medium-severity are rewritten, and low-severity are reviewed by staff.
+                </p>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No flagged responses in the last 30 days</p>
+                <p className="text-xs mt-2">Our guardrails system is actively monitoring all responses</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <Card className="mt-6">
           <CardHeader>
