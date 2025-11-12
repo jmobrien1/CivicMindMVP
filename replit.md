@@ -14,7 +14,7 @@ This branch contains a complete rebrand of the CivicMind platform for the Town o
 - **Branding:** All "CivicMind" references replaced with "West Newbury Assistant" throughout the application
 - **Custom Content:** 12 West Newbury-specific structured knowledge entries seeded (2025 holiday trash schedule, property tax procedures, boat/motor vehicle excise tax, water utility billing, town hall hours/contact, department information)
 - **Meeting Integration:** 6 upcoming Select Board and Planning Board meetings seeded with realistic dates, locations, and agendas (Nov-Dec 2025)
-- **Service Request Routing:** Keyword-based detection routes citizen complaints/issues to 7 West Newbury departments with automatic ticket creation
+- **Explicit Escalation:** "Speak to a person" button under every AI response allows residents to explicitly escalate questions to staff; tickets routed to 7 West Newbury departments with full conversation context
 - **Dual-Persona Demo Experience (COMPLETED - Nov 2025):**
   - **Landing Page:** Two-panel role selector (Resident vs Staff) with four CivicMind pillars value proposition
   - **Resident Portal:** Chat interface with 5 sample questions, accurate West Newbury answers from structured knowledge, contact information
@@ -76,12 +76,17 @@ The design system emphasizes trust, professional restraint, and responsive effic
      * **Policy Configuration:** Super_admin-only editor for bias thresholds (block/rewrite/allow levels), blocked topics management, and allowed topics management
    - **Authorization:** Role-based access control with OIDC role claim mapping; admin users can view all pages, super_admin users can modify policy configurations; role stored in both database and session for efficient authorization checks.
 
-7. **Service Request Routing (Completed - November 2025):**
-   - **Intent Detection:** Keyword-based detection of service requests (complaints, issues, problems, broken items, help requests) in chat messages
-   - **Department Routing:** Automatic routing to 7 West Newbury departments (Town Clerk, DPW, Building Inspector, Board of Health, Assessor, Finance, General Inquiry) based on category detection
-   - **Ticket Creation:** Automatic ticket creation with conversation context, user details, and department assignment for staff follow-up
-   - **User Notification:** AI response includes ticket ID, routed department, and expected response time (1-2 business days)
-   - **Analytics Tracking:** Service request events logged for transparency dashboard with ticket metadata
+7. **Explicit Escalation System - "Speak to a Person" (Completed - November 2025):**
+   - **User-Triggered Escalation:** Residents can explicitly escalate questions to human staff by clicking "Speak to a person" button under any AI response
+   - **No Automatic Tickets:** Tickets are ONLY created when users explicitly request human assistance (removed all automatic ticket creation)
+   - **Escalation Dialog:** Pre-fills user's question and AI's response for context; confirmation required before creating ticket
+   - **Department Routing:** Smart routing to 7 West Newbury departments (Town Clerk, DPW, Building Inspector, Board of Health, Assessor, Finance, General Inquiry) based on question category
+   - **Secure Endpoint:** POST `/api/tickets/escalate` with rate limiting (10 req/5min), session validation, input sanitization (2000 char question, 5000 char response limits)
+   - **Source Tracking:** All escalated tickets tagged with `source: 'resident_ai_escalation'` (set server-side, not client-provided) for analytics and workflow routing
+   - **AI Prompt Integration:** System prompt suggests escalation when AI lacks information or user requests human help
+   - **Staff Visibility:** Escalated tickets immediately visible in staff dashboard with full conversation context
+   - **Transparency Page:** Public `/transparency` page explains how the AI works, data sources, privacy guarantees, safeguards, and staff contact info in plain language
+   - **E2E Validated:** Complete flow tested from resident chat → button click → dialog → ticket creation → staff visibility
 
 8. **Meeting/Calendar Integration (Completed - November 2025):**
    - **Meetings Schema:** Database table for town meetings with composite index on (boardName, meetingDate) for optimized queries
