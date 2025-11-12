@@ -200,45 +200,9 @@ export async function registerRoutes(app: Express) {
       // Use rewritten content if available, otherwise use original
       const finalContent = guardrailCheck.rewrittenContent || aiResponse.content;
 
-      // Check if this requires human assistance (service request)
-      const departments = await storage.getAllDepartments();
-      const serviceDetection = detectServiceRequest(message, departments);
-      
-      let ticketId: string | undefined;
-      let finalResponseContent = finalContent;
-      
-      if (serviceDetection.needsHumanHelp) {
-        // Create a ticket for staff follow-up
-        const ticketData = createTicketData(
-          message,
-          conversation.id,
-          serviceDetection,
-          previousMessages
-        );
-        
-        const ticket = await storage.createTicket(ticketData);
-        ticketId = ticket.id;
-        
-        // Append ticket notification to AI response
-        const ticketNotification = generateTicketResponse(ticket);
-        finalResponseContent = `${finalContent}\n\n---\n\n${ticketNotification}`;
-        
-        // Log ticket creation
-        await storage.createAnalyticsEvent({
-          eventType: "ticket_created",
-          category: serviceDetection.category,
-          wasSuccessful: true,
-          metadata: { 
-            sessionId,
-            ticketId: ticket.id,
-            department: serviceDetection.department
-          },
-        });
-      }
-
       // Update the placeholder message with final content
       const assistantMessage = await storage.updateMessage(placeholderMessage.id, {
-        content: finalResponseContent,
+        content: finalContent,
         citations: aiResponse.citations,
       });
 
@@ -248,14 +212,12 @@ export async function registerRoutes(app: Express) {
         category: aiResponse.category,
         wasSuccessful: aiResponse.wasSuccessful,
         responseTime,
-        metadata: { sessionId, ticketCreated: !!ticketId },
+        metadata: { sessionId },
       });
       
       res.json({
         message: assistantMessage.content,
         citations: aiResponse.citations,
-        ticketCreated: !!ticketId,
-        ticketId,
       });
     } catch (error) {
       console.error("Chat error:", error);
@@ -355,6 +317,81 @@ export async function registerRoutes(app: Express) {
       res.json(ticket);
     } catch (error) {
       console.error("Ticket creation error:", error);
+      res.status(500).json({ error: "Failed to create ticket" });
+    }
+  });
+
+  // Create ticket from resident escalation ("Speak to a person")
+  app.post("/api/tickets/escalate", ocrRateLimiter.middleware(), async (req, res) => {
+    try {
+      const { conversationId, userQuestion, aiResponse, sessionId } = req.body;
+      
+      // Input validation
+      if (!conversationId || !userQuestion || !sessionId) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Validate input lengths (prevent abuse)
+      if (userQuestion.length > 2000) {
+        return res.status(400).json({ error: "Question exceeds maximum length" });
+      }
+      if (aiResponse && aiResponse.length > 5000) {
+        return res.status(400).json({ error: "Response exceeds maximum length" });
+      }
+
+      // Get conversation and validate ownership via sessionId
+      const conversation = await storage.getConversationBySessionId(sessionId);
+      if (!conversation || conversation.id !== conversationId) {
+        return res.status(403).json({ error: "Conversation not found or access denied" });
+      }
+
+      const messages = await storage.getMessages(conversationId);
+      const previousMessages = messages.slice(-5); // Last 5 messages for context
+
+      // Detect department routing
+      const departments = await storage.getAllDepartments();
+      const serviceDetection = detectServiceRequest(userQuestion, departments);
+
+      // Sanitize inputs before storage
+      const sanitizedQuestion = userQuestion.trim().substring(0, 2000);
+
+      // Create ticket with full context
+      const ticketData = createTicketData(
+        sanitizedQuestion,
+        conversationId,
+        serviceDetection,
+        previousMessages
+      );
+
+      // Override source to mark as resident escalation
+      const ticket = await storage.createTicket({
+        ...ticketData,
+        source: "resident_ai_escalation",
+      });
+
+      // Log analytics event
+      await storage.createAnalyticsEvent({
+        eventType: "ticket_created",
+        category: serviceDetection.category,
+        wasSuccessful: true,
+        metadata: {
+          ticketId: ticket.id,
+          department: serviceDetection.department,
+          conversationId,
+          source: "resident_escalation",
+        },
+      });
+
+      res.json({
+        ticket: {
+          id: ticket.id,
+          department: ticket.department,
+          status: ticket.status,
+        },
+        message: `Your request has been forwarded to ${serviceDetection.department || 'town staff'}. Expected response time: 1-2 business days.`,
+      });
+    } catch (error) {
+      console.error("Ticket escalation error:", error);
       res.status(500).json({ error: "Failed to create ticket" });
     }
   });

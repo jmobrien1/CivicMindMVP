@@ -180,6 +180,7 @@ export const tickets = pgTable("tickets", {
   category: varchar("category", { length: 100 }), // Auto-detected category
   department: varchar("department", { length: 100 }), // Routed to department
   departmentEmail: varchar("department_email", { length: 255 }), // Email address to route to
+  source: varchar("source", { length: 100 }), // "resident_ai_escalation", "form_submission", etc.
   status: varchar("status", { length: 50 }).notNull().default("open"), // "open", "in_progress", "resolved"
   assignedTo: varchar("assigned_to").references(() => users.id),
   notes: text("notes"), // Staff notes
