@@ -3,9 +3,19 @@ import { useDemo } from "@/contexts/DemoContext";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Building2, Send, HelpCircle, Loader2, ArrowLeft, FileText } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Building2, Send, HelpCircle, Loader2, ArrowLeft, FileText, UserRound } from "lucide-react";
 import { useLocation } from "wouter";
 import { nanoid } from "nanoid";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface Citation {
   documentId: string;
@@ -36,8 +46,17 @@ export default function ResidentPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isEscalating, setIsEscalating] = useState(false);
+  const [escalationDialogOpen, setEscalationDialogOpen] = useState(false);
+  const [selectedMessagePair, setSelectedMessagePair] = useState<{
+    userQuestion: string;
+    aiResponse: string;
+    messageId: string;
+  } | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [sessionId] = useState(() => residentSessionId || nanoid());
+  const [conversationId] = useState(() => nanoid());
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!residentSessionId) {
@@ -120,6 +139,65 @@ export default function ResidentPage() {
   const handleBackToHome = () => {
     setRole("resident");
     setLocation("/");
+  };
+
+  const handleEscalateToStaff = (messageId: string) => {
+    // Find the assistant message and the preceding user message
+    const messageIndex = messages.findIndex((m) => m.id === messageId);
+    if (messageIndex === -1 || messages[messageIndex].role !== "assistant") return;
+
+    const assistantMessage = messages[messageIndex];
+    const userMessage = messages[messageIndex - 1];
+
+    if (!userMessage || userMessage.role !== "user") return;
+
+    setSelectedMessagePair({
+      userQuestion: userMessage.content,
+      aiResponse: assistantMessage.content,
+      messageId: assistantMessage.id,
+    });
+    setEscalationDialogOpen(true);
+  };
+
+  const handleConfirmEscalation = async () => {
+    if (!selectedMessagePair) return;
+
+    setIsEscalating(true);
+    try {
+      const response = await fetch("/api/tickets/escalate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          conversationId,
+          userQuestion: selectedMessagePair.userQuestion,
+          aiResponse: selectedMessagePair.aiResponse,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to forward request");
+      }
+
+      toast({
+        title: "Request forwarded to staff",
+        description: data.message || "Your request has been forwarded to town staff.",
+      });
+
+      setEscalationDialogOpen(false);
+      setSelectedMessagePair(null);
+    } catch (error: any) {
+      console.error("Escalation error:", error);
+      toast({
+        title: "Failed to forward request",
+        description: error.message || "Please try again or call (978) 363-1100",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEscalating(false);
+    }
   };
 
   return (
@@ -227,6 +305,21 @@ export default function ResidentPage() {
                           </div>
                         )}
 
+                        {message.role === "assistant" && (
+                          <div className="mt-3 pt-3 border-t border-border/50">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEscalateToStaff(message.id)}
+                              className="text-xs hover-elevate"
+                              data-testid={`button-escalate-${message.id}`}
+                            >
+                              <UserRound className="h-3 w-3 mr-1.5" />
+                              Speak to a person
+                            </Button>
+                          </div>
+                        )}
+
                         <p
                           className={`text-xs mt-2 ${
                             message.role === "user" ? "text-white/70" : "text-muted-foreground"
@@ -309,6 +402,62 @@ export default function ResidentPage() {
           </div>
         </div>
       </div>
+
+      {/* Escalation Dialog */}
+      <Dialog open={escalationDialogOpen} onOpenChange={setEscalationDialogOpen}>
+        <DialogContent data-testid="dialog-escalation">
+          <DialogHeader>
+            <DialogTitle>Speak to a Person</DialogTitle>
+            <DialogDescription>
+              Your question and the AI's response will be forwarded to town staff for personalized assistance.
+              You'll receive a response within 1-2 business days.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedMessagePair && (
+            <div className="space-y-4 py-4">
+              <div>
+                <p className="text-sm font-medium mb-1">Your Question:</p>
+                <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                  {selectedMessagePair.userQuestion}
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium mb-1">AI Response:</p>
+                <div className="text-sm text-muted-foreground bg-muted p-3 rounded-md max-h-40 overflow-y-auto">
+                  {selectedMessagePair.aiResponse}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEscalationDialogOpen(false)}
+              disabled={isEscalating}
+              data-testid="button-cancel-escalation"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmEscalation}
+              disabled={isEscalating}
+              className="bg-[#004422] hover:bg-[#003318]"
+              data-testid="button-confirm-escalation"
+            >
+              {isEscalating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Forwarding...
+                </>
+              ) : (
+                "Forward to Staff"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
