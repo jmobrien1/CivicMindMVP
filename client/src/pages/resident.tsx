@@ -55,7 +55,6 @@ export default function ResidentPage() {
   } | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [sessionId] = useState(() => residentSessionId || nanoid());
-  const [conversationId] = useState(() => nanoid());
   const { toast } = useToast();
 
   useEffect(() => {
@@ -169,7 +168,6 @@ export default function ResidentPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
-          conversationId,
           userQuestion: selectedMessagePair.userQuestion,
           aiResponse: selectedMessagePair.aiResponse,
         }),

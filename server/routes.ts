@@ -324,10 +324,10 @@ export async function registerRoutes(app: Express) {
   // Create ticket from resident escalation ("Speak to a person")
   app.post("/api/tickets/escalate", ocrRateLimiter.middleware(), async (req, res) => {
     try {
-      const { conversationId, userQuestion, aiResponse, sessionId } = req.body;
+      const { userQuestion, aiResponse, sessionId } = req.body;
       
       // Input validation
-      if (!conversationId || !userQuestion || !sessionId) {
+      if (!userQuestion || !sessionId) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
@@ -339,11 +339,13 @@ export async function registerRoutes(app: Express) {
         return res.status(400).json({ error: "Response exceeds maximum length" });
       }
 
-      // Get conversation and validate ownership via sessionId
+      // Get conversation by sessionId (validates session ownership)
       const conversation = await storage.getConversationBySessionId(sessionId);
-      if (!conversation || conversation.id !== conversationId) {
+      if (!conversation) {
         return res.status(403).json({ error: "Conversation not found or access denied" });
       }
+      
+      const conversationId = conversation.id;
 
       const messages = await storage.getMessages(conversationId);
       const previousMessages = messages.slice(-5); // Last 5 messages for context
