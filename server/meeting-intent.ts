@@ -42,23 +42,28 @@ const SERVICE_KEYWORDS = [
 export function detectMeetingQuery(message: string): MeetingQuery {
   const lowerMessage = message.toLowerCase();
   
-  // Skip if this looks like a service request (trash, taxes, etc.)
-  const hasServiceKeyword = SERVICE_KEYWORDS.some(keyword => 
-    lowerMessage.includes(keyword)
-  );
-  
-  if (hasServiceKeyword) {
-    return { isMeetingQuery: false };
-  }
-  
-  // Check for explicit meeting keywords OR board names
+  // Check for explicit meeting keywords OR board names first
   const hasMeetingKeyword = MEETING_KEYWORDS.some(keyword => 
     lowerMessage.includes(keyword)
   );
   
+  // If no meeting keywords, check if it's a service request and skip
   if (!hasMeetingKeyword) {
+    const hasServiceKeyword = SERVICE_KEYWORDS.some(keyword => 
+      lowerMessage.includes(keyword)
+    );
+    
+    // Service query without meeting keywords = not a meeting query
+    if (hasServiceKeyword) {
+      return { isMeetingQuery: false };
+    }
+    
+    // No meeting keywords and no service keywords = not a meeting query
     return { isMeetingQuery: false };
   }
+  
+  // Has meeting keywords = likely a meeting query (even if service terms present)
+  // Example: "When does Select Board discuss trash?" should still be detected
 
   let boardName: string | undefined;
   for (const [keyword, name] of Object.entries(BOARD_NAMES)) {
